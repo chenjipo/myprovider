@@ -34,40 +34,34 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 var _this = this;
-hosts["streamtape"] = function (url, movieInfo, provider, config, callback) { return __awaiter(_this, void 0, void 0, function () {
-    var DOMAIN, HOST, headers, htmlDetail, parseHtmlDetail, videoDataUri, dataEmbed, e_1, e_2;
+hosts["play9str.playm4u"] = function (url, movieInfo, provider, config, callback) { return __awaiter(_this, void 0, void 0, function () {
+    var DOMAIN, HOST, headers;
     return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                DOMAIN = 'https://streamtape.com';
-                HOST = 'Streamtape';
-                _a.label = 1;
-            case 1:
-                _a.trys.push([1, 7, , 8]);
-                headers = {
-                    "referer": url,
-                    "user-agent": libs.request_getRandomUserAgent(),
-                };
-                return [4, libs.request_get(url, headers, false)];
-            case 2:
-                htmlDetail = _a.sent();
-                parseHtmlDetail = htmlDetail.match(/document\.getElementById\('norobotlink'\)\.innerHTML \= '([^']+)' *\+ *\('([^']+)/i);
-                if (!parseHtmlDetail) {
-                    return [2];
+        DOMAIN = 'https://play9str.playm4u.xyz';
+        HOST = 'PLAYM4U';
+        try {
+            headers = {
+                'Referer': "https://ww1.m4ufree.tv/",
+                'user-agent': libs.request_getRandomUserAgent()
+            };
+            callback({
+                callback: {
+                    provider: provider,
+                    host: HOST,
+                    url: url,
+                    headers: headers,
+                    metadata: {
+                        url_webview: url,
+                        domain: DOMAIN
+                    },
+                    callback: callback,
+                    beforeLoadScript: "var open = XMLHttpRequest.prototype.open;\n                    XMLHttpRequest.prototype.open = function() {\n                        this.addEventListener(\"load\", function() {\n                            var message = {\"status\" : this.status, \"responseURL\" : this.responseURL, \"responseText\": this.responseText, \"response\": this.response}\n                            \n                            window.ReactNativeWebView.postMessage(JSON.stringify(message));\n                        });\n                        open.apply(this, arguments);\n                    };"
                 }
-                videoDataUri = parseHtmlDetail[1] + parseHtmlDetail[2].substring(1).substring(2);
-                if (!videoDataUri) {
-                    return [2];
-                }
-                if (_.startsWith(videoDataUri, "/")) {
-                    videoDataUri = "https:".concat(videoDataUri);
-                }
-                libs.log({ videoDataUri: videoDataUri }, provider, 'videoDataUri');
-                _a.label = 3;
-            case 3:
-                _a.trys.push([3, 5, , 6]);
-                return [4, fetch(videoDataUri, {
-                        redirect: 'manual',
-                        method: 'HEAD',
-                        headers: {
-                            "user-agent": "Mozilla/5.0 (Windows NT 6.1;
+            });
+        }
+        catch (error) {
+            libs.log({ error: error }, HOST, 'ERROR EMBED PLAY9');
+        }
+        return [2];
+    });
+}); };

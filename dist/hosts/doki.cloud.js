@@ -1,3 +1,14 @@
+var __assign = (this && this.__assign) || function () {
+    __assign = Object.assign || function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+            s = arguments[i];
+            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
+                t[p] = s[p];
+        }
+        return t;
+    };
+    return __assign.apply(this, arguments);
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -33,26 +44,52 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
+    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+        if (ar || !(i in from)) {
+            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+            ar[i] = from[i];
+        }
+    }
+    return to.concat(ar || Array.prototype.slice.call(from));
+};
 var _this = this;
-hosts["rabbitstream"] = function (url, movieInfo, provider, config, callback) { return __awaiter(_this, void 0, void 0, function () {
-    var DOMAIN, HOST, headers, idRabbit, dataRabbit, source3, parseTrack, tracks, _i, parseTrack_1, trackItem, lang, parseLang, rank, _a, source3_1, item, directSizes, patternSize, directQuality, _b, patternSize_1, patternItem, sizeQuality;
+hosts["dokicloud"] = function (url, movieInfo, provider, config, callback) { return __awaiter(_this, void 0, void 0, function () {
+    var DOMAIN, HOST, headers, id, urlDirect, parseDirect, source1, source2, source3, parseTrack, tracks, _i, parseTrack_1, trackItem, lang, parseLang, rank, _a, source1_1, item, directSizes, patternSize, directQuality, _b, patternSize_1, patternItem, sizeQuality;
     return __generator(this, function (_c) {
         switch (_c.label) {
             case 0:
                 libs.log({ provider: provider }, provider, 'PROVIDER');
-                DOMAIN = 'https://rabbitstream.net';
-                HOST = 'Rabbitstream';
+                DOMAIN = 'https://dokicloud.one';
+                HOST = 'DokiCloud';
                 headers = {
-                    "Referer": "https://fmovies.ps/"
+                    'referer': 'https://fmovies.ps'
                 };
-                idRabbit = url.match(/embed\-0-9]+\/([A-z0-9]+)/);
-                idRabbit = idRabbit ? idRabbit[1] : '';
-                return [4, libs.request_get("https://aquariumtv.app/rabbit?id=".concat(idRabbit))];
+                id = url.match(/embed\-0-9]+\/([A-z0-9]+)/);
+                id = id ? id[1] : '';
+                libs.log({
+                    id: id
+                }, HOST, 'ID');
+                if (!id) {
+                    return [2];
+                }
+                urlDirect = "".concat(DOMAIN, "/ajax/embed-4/getSources?id=").concat(id);
+                return [4, libs.request_get(urlDirect, __assign(__assign({}, headers), { 'x-requested-with': 'XMLHttpRequest' }))];
             case 1:
-                dataRabbit = _c.sent();
-                libs.log({ dataRabbit: dataRabbit }, HOST, "DATA RABBIT");
-                source3 = dataRabbit['sources'] || [];
-                parseTrack = dataRabbit['tracks'] || [];
+                parseDirect = _c.sent();
+                libs.log({
+                    parseDirect: parseDirect,
+                    url: url
+                }, HOST, "PARSE DIRECT");
+                return [4, libs.embed_fmovies_id(parseDirect['sources'], headers, url)];
+            case 2:
+                source1 = (_c.sent()) || [];
+                libs.log({ source1: source1, tracks: tracks }, HOST, 'SOURCES_1');
+                return [4, libs.embed_fmovies_id(parseDirect['sourcesBackup'], headers, url)];
+            case 3:
+                source2 = (_c.sent()) || [];
+                source3 = __spreadArray(__spreadArray([], source1, true), source2, true);
+                parseTrack = parseDirect['tracks'] || [];
                 tracks = [];
                 for (_i = 0, parseTrack_1 = parseTrack; _i < parseTrack_1.length; _i++) {
                     trackItem = parseTrack_1[_i];
@@ -74,44 +111,53 @@ hosts["rabbitstream"] = function (url, movieInfo, provider, config, callback) { 
                 }
                 libs.log({ source3: source3, tracks: tracks }, HOST, 'SOURCES_TRACK');
                 rank = 0;
-                _a = 0, source3_1 = source3;
-                _c.label = 2;
-            case 2:
-                if (!(_a < source3_1.length)) return [3, 5];
-                item = source3_1[_a];
+                _a = 0, source1_1 = source1;
+                _c.label = 4;
+            case 4:
+                if (!(_a < source1_1.length)) return [3, 7];
+                item = source1_1[_a];
                 if (!item.file) {
-                    return [3, 4];
+                    return [3, 6];
+                }
+                if (item.file.indexOf('thedaywestream') !== -1) {
+                    return [3, 6];
+                }
+                if (item.file.indexOf('birdsystem') !== -1) {
+                    return [3, 6];
                 }
                 return [4, libs.request_get(item.file, {})];
-            case 3:
+            case 5:
                 directSizes = _c.sent();
                 patternSize = directSizes.match(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/ig);
                 if (!patternSize) {
                     libs.embed_callback(item.file, provider, host, item.type, callback, ++rank, tracks);
-                    return [3, 4];
+                    return [3, 6];
                 }
                 directQuality = [];
                 libs.log({ patternSize: patternSize }, provider, 'PATTERN SIZE');
                 for (_b = 0, patternSize_1 = patternSize; _b < patternSize_1.length; _b++) {
                     patternItem = patternSize_1[_b];
                     sizeQuality = patternItem.match(/\/([0-9]+)\//i);
-                    sizeQuality = sizeQuality ? Number(sizeQuality[1]) : 1080;
+                    sizeQuality = sizeQuality ? sizeQuality[1] : 'HD';
+                    if (patternItem.indexOf('feetcdn.com:2223') != -1 && movieInfo.platform && movieInfo.platform == 'android') {
+                        libs.log({ patternItem: patternItem, movieInfo: movieInfo }, provider, 'ignorePattern');
+                        continue;
+                    }
                     directQuality.push({
                         file: patternItem,
                         quality: sizeQuality
                     });
                 }
                 if (!directQuality.length) {
-                    return [3, 4];
+                    return [3, 6];
                 }
-                directQuality = _.orderBy(directQuality, ['quality'], ['desc']);
                 libs.log({ directQuality: directQuality }, provider, 'DIRECT QUALITY');
-                libs.embed_callback(directQuality[0].file, provider, HOST, 'Hls', callback, ++rank, tracks, directQuality);
-                _c.label = 4;
-            case 4:
+                libs.embed_callback(item.file, provider, HOST, 'Hls', callback, ++rank, tracks, directQuality);
+                _c.label = 6;
+            case 6:
                 _a++;
-                return [3, 2];
-            case 5: return [2];
+                return [3, 4];
+            case 7: return [2];
         }
     });
 }); };

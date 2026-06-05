@@ -26,8 +26,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                     if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
                     if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
                     if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                    if (t[2]) _.ops.pop();
-                    _.trys.pop(); continue;
+                    if (t[2]) _.ops.pop(); _.trys.pop(); continue;
             }
             op = body.call(thisArg, _);
         } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
@@ -36,84 +35,50 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 var _this = this;
 hosts["vidstream"] = function (url, movieInfo, provider, config, callback) { return __awaiter(_this, void 0, void 0, function () {
-    var userAgent, urlEmbed, DOMAIN, HOST, urlEmbed, dataEmbed, rank, _i, _a, embedItem, embedData, patternQuality, directQuality, _b, patternQuality_1, patternItem, sizeQuality, urlDirect, urlDirect;
-    return __generator(this, function (_c) {
-        switch (_c.label) {
+    var DOMAIN, HOST, headers, parseEmbed, scriptEval, unpack, source, parseDirect, directUrl;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
             case 0:
-                userAgent = libs.request_getRandomUserAgent();
-                urlEmbed = url.replace('/e/', '/info/');
                 DOMAIN = 'https://vidstream.pro';
-                HOST = 'VidStream';
-                urlEmbed = url.replace('/e/', '/info/');
-                return [4, libs.request_get(urlEmbed, {
-                        referer: 'https://fmovies.to/',
-                        'user-agent': userAgent,
-                    }, false)];
+                HOST = 'Vidstream';
+                headers = {
+                    'content-type': 'application/json;charset=UTF-8',
+                    'Referer': config.options.link_detail,
+                };
+                return [4, libs.request_get(url, headers, true)];
             case 1:
-                dataEmbed = _c.sent();
-                libs.log({ urlEmbed: urlEmbed, dataEmbed: dataEmbed, subs: config.subs }, provider, 'DATA EMBED');
-                if (!dataEmbed || !dataEmbed.success || !dataEmbed.media || !dataEmbed.media.sources) {
+                parseEmbed = _a.sent();
+                scriptEval = '';
+                parseEmbed('script').each(function (key, item) {
+                    if (parseEmbed(item).text().indexOf('eval(') != -1) {
+                        scriptEval = parseEmbed(item).text();
+                    }
+                });
+                if (!scriptEval) {
                     return [2];
                 }
-                rank = 0;
-                _i = 0, _a = dataEmbed.media.sources;
-                _c.label = 2;
+                unpack = libs.string_unpack(scriptEval);
+                libs.log({ unpack: unpack }, provider, 'UNPACK');
+                source = unpack.match(/file *\: *\"([^\"]+)/i);
+                source = source ? source[1] : '';
+                if (!source) {
+                    return [2];
+                }
+                libs.log({ source: source }, provider, 'SOURCE');
+                return [4, libs.request_get(source, {})];
             case 2:
-                if (!(_i < _a.length)) return [3, 5];
-                embedItem = _a[_i];
-                if (!embedItem.file) {
-                    return [3, 4];
+                parseDirect = _a.sent();
+                directUrl = parseDirect.match(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/i);
+                directUrl = directUrl ? directUrl[0] : '';
+                if (!directUrl) {
+                    return [2];
                 }
-                if (!(embedItem.file.indexOf('vidstream') != -1 || embedItem.file.indexOf('mcloud.to') != -1)) return [3, 4];
-                return [4, libs.request_get(embedItem.file, {
-                        referer: url,
-                    })];
-            case 3:
-                embedData = _c.sent();
-                if (!embedData) {
-                    return [3, 4];
-                }
-                patternQuality = embedData.match(/hls\/([0-9]+)\/[0-9]+\.m3u8/ig);
-                libs.log({ patternQuality: patternQuality, file: embedItem.file }, provider, 'PATTERN QUALITY');
-                if (!patternQuality) {
-                    libs.embed_callback(embedItem.file, provider, HOST, 'Hls', callback, ++rank, config.subs ? config.subs : []);
-                    return [3, 4];
-                }
-                directQuality = [];
-                for (_b = 0, patternQuality_1 = patternQuality; _b < patternQuality_1.length; _b++) {
-                    patternItem = patternQuality_1[_b];
-                    sizeQuality = patternItem.match(/([0-9]+)/i);
-                    sizeQuality = sizeQuality ? sizeQuality[1] : 'HD';
-                    if (embedItem.file.indexOf("list.m3u8#.mp4") != -1) {
-                        urlDirect = embedItem.file.replace('list.m3u8#.mp4', patternItem);
-                        libs.log({ urlDirect: urlDirect, sizeQuality: sizeQuality }, provider, 'URL DIRECR REPLACE');
-                        directQuality.push({
-                            file: urlDirect,
-                            quality: sizeQuality
-                        });
-                    }
-                    else if (embedItem.file.indexOf("list.m3u8") != -1) {
-                        urlDirect = embedItem.file.replace('list.m3u8', patternItem);
-                        libs.log({ urlDirect: urlDirect, sizeQuality: sizeQuality }, provider, 'URL DIRECR REPLACE');
-                        directQuality.push({
-                            file: urlDirect,
-                            quality: sizeQuality
-                        });
-                    }
-                }
-                libs.embed_callback(embedItem.file, provider, HOST, 'Hls', callback, ++rank, config.subs ? config.subs : [], directQuality, {
-                    referer: url,
-                    origin: DOMAIN,
-                    'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/94.0.4606.81 Safari/537.36',
-                    'sec-fetch-dest': 'empty',
-                    'sec-fetch-mode': 'cors',
-                    'sec-fetch-site': 'cross-site',
+                libs.log({ directUrl: directUrl }, provider, 'DIRECT URL');
+                libs.embed_callback(directUrl, provider, HOST, 'Hls', callback, 1, [], [{ file: directUrl, quality: 1080 }], {
+                    'Referer': DOMAIN,
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
                 });
-                _c.label = 4;
-            case 4:
-                _i++;
-                return [3, 2];
-            case 5: return [2];
+                return [2];
         }
     });
 }); };

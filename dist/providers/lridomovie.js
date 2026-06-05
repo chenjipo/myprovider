@@ -13,7 +13,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -26,7 +26,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                     if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
                     if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
                     if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                    if (t[2]) _.ops.pop(); _.trys.pop(); continue;
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
             }
             op = body.call(thisArg, _);
         } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
@@ -34,37 +35,60 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 var _this = this;
-hosts["playmezzz"] = function (url, movieInfo, provider, config, callback) { return __awaiter(_this, void 0, void 0, function () {
-    var DOMAIN, HOST, headers, movieId, domainGetDirect, body, playmeData, directUrl;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
+source.getResource = function (movieInfo, config, callback) { return __awaiter(_this, void 0, void 0, function () {
+    var PROVIDER, DOMAIN, slugDetail, url, parseSearch, _i, _a, item, detailUrl, parseDetail, iframe, iframeUrl, e_1;
+    return __generator(this, function (_b) {
+        switch (_b.label) {
             case 0:
-                DOMAIN = 'https://playmezzz.xyz';
-                HOST = 'PLAYME';
-                headers = {
-                    'content-type': 'application/json;charset=UTF-8'
-                };
-                movieId = url.match(/watch\/([A-z0-9]+)/i);
-                movieId = movieId ? movieId[1] : '';
-                if (!movieId) {
-                    return [2];
-                }
-                domainGetDirect = "".concat(DOMAIN, "/api/video/get");
-                body = {
-                    id: movieId
-                };
-                return [4, libs.request_post(domainGetDirect, headers, body)];
+                PROVIDER = 'LRIDOMOVIE';
+                DOMAIN = "https://ridomovies.tv";
+                _b.label = 1;
             case 1:
-                playmeData = _a.sent();
-                if (!playmeData.status || playmeData.status != 'success') {
+                _b.trys.push([1, 5, , 6]);
+                slugDetail = '';
+                url = "".concat(DOMAIN, "/api/search?q=").concat(libs.url_slug_search(movieInfo, "%20"));
+                return [4, libs.request_get(url)];
+            case 2:
+                parseSearch = _b.sent();
+                libs.log({ parseSearch: parseSearch }, PROVIDER, "PARSE SEARCH");
+                for (_i = 0, _a = parseSearch.data; _i < _a.length; _i++) {
+                    item = _a[_i];
+                    if (item.tmdb_id == movieInfo.tmdb_id) {
+                        slugDetail = item.slug;
+                        break;
+                    }
+                }
+                libs.log({ slugDetail: slugDetail }, PROVIDER, 'SLUG_DETAIL');
+                if (!slugDetail) {
                     return [2];
                 }
-                directUrl = playmeData.result && playmeData.result.playlist ? playmeData.result.playlist : '';
-                if (!directUrl) {
+                detailUrl = "".concat(DOMAIN, "/movie/").concat(slugDetail);
+                if (movieInfo.type == 'tv') {
+                    detailUrl = "".concat(DOMAIN, "/tv/").concat(slugDetail, "/season-").concat(movieInfo.season, "/episode-").concat(movieInfo.episode);
+                }
+                return [4, libs.request_get(detailUrl, {}, true)];
+            case 3:
+                parseDetail = _b.sent();
+                iframe = parseDetail("#player-cover").attr("data-embed");
+                libs.log({ iframe: iframe }, PROVIDER, 'IFRAME URL');
+                if (!iframe) {
                     return [2];
                 }
-                libs.embed_callback(directUrl, provider, HOST, 'Hls', callback);
-                return [2];
+                iframeUrl = iframe.match(/src=\"([^\"]+)/i);
+                iframeUrl = iframeUrl ? iframeUrl[1] : '';
+                libs.log({ iframeUrl: iframeUrl }, PROVIDER, 'IFRAME URL');
+                if (!iframeUrl) {
+                    return [2];
+                }
+                return [4, libs.embed_redirect(iframeUrl, '', movieInfo, PROVIDER, callback, undefined, [])];
+            case 4:
+                _b.sent();
+                return [3, 6];
+            case 5:
+                e_1 = _b.sent();
+                libs.log({ e: e_1 }, PROVIDER);
+                return [3, 6];
+            case 6: return [2, true];
         }
     });
 }); };

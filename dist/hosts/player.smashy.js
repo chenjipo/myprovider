@@ -13,7 +13,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -34,40 +34,39 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 var _this = this;
-hosts["streamtape"] = function (url, movieInfo, provider, config, callback) { return __awaiter(_this, void 0, void 0, function () {
-    var DOMAIN, HOST, headers, htmlDetail, parseHtmlDetail, videoDataUri, dataEmbed, e_1, e_2;
+hosts["player.smashy"] = function (url, movieInfo, provider, config, callback) { return __awaiter(_this, void 0, void 0, function () {
+    var HOST;
     return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                DOMAIN = 'https://streamtape.com';
-                HOST = 'Streamtape';
-                _a.label = 1;
-            case 1:
-                _a.trys.push([1, 7, , 8]);
-                headers = {
-                    "referer": url,
-                    "user-agent": libs.request_getRandomUserAgent(),
-                };
-                return [4, libs.request_get(url, headers, false)];
-            case 2:
-                htmlDetail = _a.sent();
-                parseHtmlDetail = htmlDetail.match(/document\.getElementById\('norobotlink'\)\.innerHTML \= '([^']+)' *\+ *\('([^']+)/i);
-                if (!parseHtmlDetail) {
-                    return [2];
+        HOST = "SMASHYSTREAM";
+        try {
+            libs.log({ url: url }, "HOST SMASHYSTREAM");
+            callback({
+                callback: {
+                    provider: provider,
+                    host: HOST,
+                    url: url,
+                    headers: {
+                        accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7",
+                        "Upgrade-Insecure-Requests": 1,
+                        "Sec-Fetch-Mode": "navigate",
+                        "Sec-Fetch-Site": "none",
+                        "Sec-Fetch-User": "?1",
+                        "Sec-Fetch-Dest": "document",
+                        "Accept-Language": "en-US,en;q=0.9",
+                        "Accept-Encoding": "gzip, deflate, br, zstd",
+                    },
+                    callback: callback,
+                    userAgent: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36",
+                    beforeLoadScript: "\n                try {\n                window.ReactNativeWebView.postMessage(JSON.stringify({\"asdasd\": \"asd\"})); \n                    var b = fetch;\n                    fetch = (data, config = {}) => {\n                    \n                        window.ReactNativeWebView.postMessage(JSON.stringify({data})); \n                        return b(data, config)\n                    }\n                } catch(e) {\n                   window.ReactNativeWebView.postMessage(JSON.stringify({error: string(e)}));\n                }\n                ",
+                    metadata: {
+                        movieInfo: movieInfo
+                    }
                 }
-                videoDataUri = parseHtmlDetail[1] + parseHtmlDetail[2].substring(1).substring(2);
-                if (!videoDataUri) {
-                    return [2];
-                }
-                if (_.startsWith(videoDataUri, "/")) {
-                    videoDataUri = "https:".concat(videoDataUri);
-                }
-                libs.log({ videoDataUri: videoDataUri }, provider, 'videoDataUri');
-                _a.label = 3;
-            case 3:
-                _a.trys.push([3, 5, , 6]);
-                return [4, fetch(videoDataUri, {
-                        redirect: 'manual',
-                        method: 'HEAD',
-                        headers: {
-                            "user-agent": "Mozilla/5.0 (Windows NT 6.1;
+            });
+        }
+        catch (e) {
+            libs.log({ e: e }, HOST, "ERROR");
+        }
+        return [2];
+    });
+}); };

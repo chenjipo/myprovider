@@ -34,40 +34,52 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 var _this = this;
-hosts["streamtape"] = function (url, movieInfo, provider, config, callback) { return __awaiter(_this, void 0, void 0, function () {
-    var DOMAIN, HOST, headers, htmlDetail, parseHtmlDetail, videoDataUri, dataEmbed, e_1, e_2;
-    return __generator(this, function (_a) {
-        switch (_a.label) {
+source.getResource = function (movieInfo, config, callback) { return __awaiter(_this, void 0, void 0, function () {
+    var PROVIDER, DOMAIN, headers, url, dataDirect, stt, _i, _a, item, e_1;
+    return __generator(this, function (_b) {
+        switch (_b.label) {
             case 0:
-                DOMAIN = 'https://streamtape.com';
-                HOST = 'Streamtape';
-                _a.label = 1;
-            case 1:
-                _a.trys.push([1, 7, , 8]);
+                PROVIDER = 'JustHD';
+                DOMAIN = "https://embed.justhd.tv";
                 headers = {
-                    "referer": url,
-                    "user-agent": libs.request_getRandomUserAgent(),
+                    'user-agent': "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36",
+                    'Referer': "https://embed.justhd.tv/",
+                    'Origin': DOMAIN,
                 };
-                return [4, libs.request_get(url, headers, false)];
+                _b.label = 1;
+            case 1:
+                _b.trys.push([1, 3, , 4]);
+                url = "".concat(DOMAIN, "/api.php?tmdb=").concat(movieInfo.tmdb_id, "&type=").concat(movieInfo.type);
+                if (movieInfo.type == 'tv') {
+                    url += "&season=".concat(movieInfo.season, "&episode=").concat(movieInfo.episode);
+                }
+                return [4, libs.request_get(url, headers)];
             case 2:
-                htmlDetail = _a.sent();
-                parseHtmlDetail = htmlDetail.match(/document\.getElementById\('norobotlink'\)\.innerHTML \= '([^']+)' *\+ *\('([^']+)/i);
-                if (!parseHtmlDetail) {
+                dataDirect = _b.sent();
+                libs.log({ dataDirect: dataDirect }, PROVIDER, "DATA DIRECT");
+                if (!dataDirect || !dataDirect.data.stream_urls) {
                     return [2];
                 }
-                videoDataUri = parseHtmlDetail[1] + parseHtmlDetail[2].substring(1).substring(2);
-                if (!videoDataUri) {
-                    return [2];
+                stt = 0;
+                for (_i = 0, _a = dataDirect.data.stream_urls; _i < _a.length; _i++) {
+                    item = _a[_i];
+                    if (item.indexOf('.m3u8') == -1) {
+                        continue;
+                    }
+                    if (stt >= 2) {
+                        break;
+                    }
+                    libs.embed_callback(item, PROVIDER, PROVIDER, 'Hls', callback, 1, [], [{ file: item, quality: 1080 }], headers, {
+                        type: "m3u8",
+                    });
+                    stt += 1;
                 }
-                if (_.startsWith(videoDataUri, "/")) {
-                    videoDataUri = "https:".concat(videoDataUri);
-                }
-                libs.log({ videoDataUri: videoDataUri }, provider, 'videoDataUri');
-                _a.label = 3;
+                return [3, 4];
             case 3:
-                _a.trys.push([3, 5, , 6]);
-                return [4, fetch(videoDataUri, {
-                        redirect: 'manual',
-                        method: 'HEAD',
-                        headers: {
-                            "user-agent": "Mozilla/5.0 (Windows NT 6.1;
+                e_1 = _b.sent();
+                libs.log({ e: e_1 }, PROVIDER, "ERROR");
+                return [3, 4];
+            case 4: return [2];
+        }
+    });
+}); };

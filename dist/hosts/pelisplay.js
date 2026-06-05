@@ -34,40 +34,32 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 var _this = this;
-hosts["streamtape"] = function (url, movieInfo, provider, config, callback) { return __awaiter(_this, void 0, void 0, function () {
-    var DOMAIN, HOST, headers, htmlDetail, parseHtmlDetail, videoDataUri, dataEmbed, e_1, e_2;
+hosts["pelisplay"] = function (url, movieInfo, provider, config, callback) { return __awaiter(_this, void 0, void 0, function () {
+    var DOMAIN, HOST, headers, htmlDetail, sourcesUrl, source1, resultData;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                DOMAIN = 'https://streamtape.com';
-                HOST = 'Streamtape';
-                _a.label = 1;
-            case 1:
-                _a.trys.push([1, 7, , 8]);
+                DOMAIN = 'https://pelisplay.cc';
+                HOST = 'pelisplay';
                 headers = {
-                    "referer": url,
-                    "user-agent": libs.request_getRandomUserAgent(),
+                    'content-type': 'application/json;charset=UTF-8'
                 };
-                return [4, libs.request_get(url, headers, false)];
-            case 2:
+                return [4, libs.request_get(url, {
+                        Referer: url
+                    }, false)];
+            case 1:
                 htmlDetail = _a.sent();
-                parseHtmlDetail = htmlDetail.match(/document\.getElementById\('norobotlink'\)\.innerHTML \= '([^']+)' *\+ *\('([^']+)/i);
-                if (!parseHtmlDetail) {
+                sourcesUrl = htmlDetail.match(/sources *\: *\[ *\{ *file *\: *\'([^\']+)/i);
+                source1 = sourcesUrl ? sourcesUrl[1] : '';
+                if (!source1) {
                     return [2];
                 }
-                videoDataUri = parseHtmlDetail[1] + parseHtmlDetail[2].substring(1).substring(2);
-                if (!videoDataUri) {
-                    return [2];
-                }
-                if (_.startsWith(videoDataUri, "/")) {
-                    videoDataUri = "https:".concat(videoDataUri);
-                }
-                libs.log({ videoDataUri: videoDataUri }, provider, 'videoDataUri');
-                _a.label = 3;
-            case 3:
-                _a.trys.push([3, 5, , 6]);
-                return [4, fetch(videoDataUri, {
-                        redirect: 'manual',
-                        method: 'HEAD',
-                        headers: {
-                            "user-agent": "Mozilla/5.0 (Windows NT 6.1;
+                libs.log({ source1: source1, sourcesUrl: sourcesUrl }, provider, 'SOURCE');
+                return [4, axiosS.get(source1)];
+            case 2:
+                resultData = _a.sent();
+                libs.embed_callback(source1, provider, HOST, 'Hls', callback, 1, [], [], {});
+                return [2];
+        }
+    });
+}); };

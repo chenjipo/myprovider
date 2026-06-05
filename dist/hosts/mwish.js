@@ -34,40 +34,44 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 var _this = this;
-hosts["streamtape"] = function (url, movieInfo, provider, config, callback) { return __awaiter(_this, void 0, void 0, function () {
-    var DOMAIN, HOST, headers, htmlDetail, parseHtmlDetail, videoDataUri, dataEmbed, e_1, e_2;
+hosts["mwish"] = function (url, movieInfo, provider, config, callback) { return __awaiter(_this, void 0, void 0, function () {
+    var userAgent, DOMAIN, HOST, parseEmbed, evalData, unpack, source;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                DOMAIN = 'https://streamtape.com';
-                HOST = 'Streamtape';
-                _a.label = 1;
+                userAgent = libs.request_getRandomUserAgent();
+                DOMAIN = 'https://mwish.pro';
+                HOST = 'MWISH';
+                return [4, libs.request_get(url, {}, true)];
             case 1:
-                _a.trys.push([1, 7, , 8]);
-                headers = {
-                    "referer": url,
-                    "user-agent": libs.request_getRandomUserAgent(),
-                };
-                return [4, libs.request_get(url, headers, false)];
-            case 2:
-                htmlDetail = _a.sent();
-                parseHtmlDetail = htmlDetail.match(/document\.getElementById\('norobotlink'\)\.innerHTML \= '([^']+)' *\+ *\('([^']+)/i);
-                if (!parseHtmlDetail) {
+                parseEmbed = _a.sent();
+                libs.log({ length: parseEmbed("script").length }, HOST, "EMBED LENGTH");
+                evalData = "";
+                parseEmbed("script").each(function (key, item) {
+                    var scriptData = parseEmbed(item).text();
+                    if (scriptData && scriptData.indexOf("eval(") != -1) {
+                        evalData = scriptData;
+                    }
+                });
+                libs.log({ evalData: evalData }, HOST, "EVAL DATA");
+                if (!evalData) {
                     return [2];
                 }
-                videoDataUri = parseHtmlDetail[1] + parseHtmlDetail[2].substring(1).substring(2);
-                if (!videoDataUri) {
+                unpack = libs.string_unpack(evalData);
+                libs.log({
+                    unpack: unpack,
+                }, HOST, 'UNPACK REPLACE');
+                source = unpack.match(/file *\: *\"([^\"]+)/i);
+                source = source ? source[1] : '';
+                libs.log({
+                    unpack: unpack,
+                    source: source
+                }, HOST, 'UNPACK');
+                if (!source) {
                     return [2];
                 }
-                if (_.startsWith(videoDataUri, "/")) {
-                    videoDataUri = "https:".concat(videoDataUri);
-                }
-                libs.log({ videoDataUri: videoDataUri }, provider, 'videoDataUri');
-                _a.label = 3;
-            case 3:
-                _a.trys.push([3, 5, , 6]);
-                return [4, fetch(videoDataUri, {
-                        redirect: 'manual',
-                        method: 'HEAD',
-                        headers: {
-                            "user-agent": "Mozilla/5.0 (Windows NT 6.1;
+                libs.embed_callback(source, provider, HOST, 'Hls', callback);
+                return [2];
+        }
+    });
+}); };

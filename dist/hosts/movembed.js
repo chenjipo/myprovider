@@ -34,40 +34,43 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 var _this = this;
-hosts["streamtape"] = function (url, movieInfo, provider, config, callback) { return __awaiter(_this, void 0, void 0, function () {
-    var DOMAIN, HOST, headers, htmlDetail, parseHtmlDetail, videoDataUri, dataEmbed, e_1, e_2;
+hosts["movembed"] = function (url, movieInfo, provider, config, callback) { return __awaiter(_this, void 0, void 0, function () {
+    var userAgent, decrypt, encrypt, DOMAIN, HOST, newUrl, parseEmbed;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                DOMAIN = 'https://streamtape.com';
-                HOST = 'Streamtape';
-                _a.label = 1;
-            case 1:
-                _a.trys.push([1, 7, , 8]);
-                headers = {
-                    "referer": url,
-                    "user-agent": libs.request_getRandomUserAgent(),
+                userAgent = libs.request_getRandomUserAgent();
+                decrypt = function (str) {
+                    var _0x48af28 = '9225679083961858';
+                    var _0x4405f4 = '25742532592138496744665879883281';
+                    var _0x549f1f = cryptoS['enc']['Utf8']['stringify'](cryptoS['AES']['decrypt'](str, cryptoS['enc']['Utf8']['parse'](_0x4405f4), {
+                        'iv': cryptoS['enc']['Utf8']['parse'](_0x48af28)
+                    }));
+                    return _0x549f1f;
                 };
-                return [4, libs.request_get(url, headers, false)];
-            case 2:
-                htmlDetail = _a.sent();
-                parseHtmlDetail = htmlDetail.match(/document\.getElementById\('norobotlink'\)\.innerHTML \= '([^']+)' *\+ *\('([^']+)/i);
-                if (!parseHtmlDetail) {
-                    return [2];
-                }
-                videoDataUri = parseHtmlDetail[1] + parseHtmlDetail[2].substring(1).substring(2);
-                if (!videoDataUri) {
-                    return [2];
-                }
-                if (_.startsWith(videoDataUri, "/")) {
-                    videoDataUri = "https:".concat(videoDataUri);
-                }
-                libs.log({ videoDataUri: videoDataUri }, provider, 'videoDataUri');
-                _a.label = 3;
-            case 3:
-                _a.trys.push([3, 5, , 6]);
-                return [4, fetch(videoDataUri, {
-                        redirect: 'manual',
-                        method: 'HEAD',
-                        headers: {
-                            "user-agent": "Mozilla/5.0 (Windows NT 6.1;
+                encrypt = function (str) {
+                    var _0x48af28 = '9225679083961858';
+                    var _0x4405f4 = '25742532592138496744665879883281';
+                    return cryptoS['AES']['encrypt'](str, cryptoS['enc']['Utf8']['parse'](_0x4405f4), {
+                        'iv': cryptoS['enc']['Utf8']['parse'](_0x48af28)
+                    })['toString']();
+                };
+                DOMAIN = 'https://movembed.cc';
+                HOST = 'MEMBED';
+                newUrl = url.replace('membed.net', 'membed1.net');
+                newUrl = url.replace('http:', 'https:');
+                return [4, libs.request_get(newUrl, {}, true)];
+            case 1:
+                parseEmbed = _a.sent();
+                libs.log({ length: parseEmbed(".list-server-items li").length }, HOST, "EMBED LENGTH");
+                parseEmbed(".list-server-items li").each(function (key, item) {
+                    var iframeUrl = parseEmbed(item).attr("data-video");
+                    libs.log({ iframeUrl: iframeUrl }, HOST, "IFRAME URL");
+                    if (iframeUrl) {
+                        libs.embed_redirect(iframeUrl, '', movieInfo, provider, callback, '');
+                    }
+                });
+                return [2];
+        }
+    });
+}); };

@@ -34,40 +34,47 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 var _this = this;
-hosts["streamtape"] = function (url, movieInfo, provider, config, callback) { return __awaiter(_this, void 0, void 0, function () {
-    var DOMAIN, HOST, headers, htmlDetail, parseHtmlDetail, videoDataUri, dataEmbed, e_1, e_2;
+hosts["jeniusplay"] = function (url, movieInfo, provider, config, callback) { return __awaiter(_this, void 0, void 0, function () {
+    var DOMAIN, HOST, id, urlDirect, body, headers, directData, e_1;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                DOMAIN = 'https://streamtape.com';
-                HOST = 'Streamtape';
+                DOMAIN = 'https://jeniusplay.com';
+                HOST = 'jeniusplay';
                 _a.label = 1;
             case 1:
-                _a.trys.push([1, 7, , 8]);
+                _a.trys.push([1, 3, , 4]);
+                id = url.match(/\/video\/([A-z0-9]+)/i);
+                id = id ? id[1] : "";
+                libs.log({ id: id }, HOST, "ID");
+                if (!id) {
+                    return [2];
+                }
+                urlDirect = "".concat(DOMAIN, "/player/index.php?data=").concat(id, "&do=getVideo");
+                body = qs.stringify({
+                    hash: id,
+                    r: config.options.domain
+                });
                 headers = {
-                    "referer": url,
-                    "user-agent": libs.request_getRandomUserAgent(),
+                    'Content-type': "application/x-www-form-urlencoded; charset=UTF-8",
+                    Origin: DOMAIN,
+                    "Referer": config.options.domain,
+                    "X-Requested-With": "XMLHttpRequest",
                 };
-                return [4, libs.request_get(url, headers, false)];
+                return [4, libs.request_post(urlDirect, headers, body)];
             case 2:
-                htmlDetail = _a.sent();
-                parseHtmlDetail = htmlDetail.match(/document\.getElementById\('norobotlink'\)\.innerHTML \= '([^']+)' *\+ *\('([^']+)/i);
-                if (!parseHtmlDetail) {
+                directData = _a.sent();
+                libs.log({ directData: directData, body: body }, HOST, "DIRECT DATA REQUEST");
+                if (!directData.videoSource) {
                     return [2];
                 }
-                videoDataUri = parseHtmlDetail[1] + parseHtmlDetail[2].substring(1).substring(2);
-                if (!videoDataUri) {
-                    return [2];
-                }
-                if (_.startsWith(videoDataUri, "/")) {
-                    videoDataUri = "https:".concat(videoDataUri);
-                }
-                libs.log({ videoDataUri: videoDataUri }, provider, 'videoDataUri');
-                _a.label = 3;
+                libs.embed_callback(directData.videoSource, provider, HOST, 'Hls', callback, 1, [], [{ file: directData.videoSource, quality: 1080 }]);
+                return [3, 4];
             case 3:
-                _a.trys.push([3, 5, , 6]);
-                return [4, fetch(videoDataUri, {
-                        redirect: 'manual',
-                        method: 'HEAD',
-                        headers: {
-                            "user-agent": "Mozilla/5.0 (Windows NT 6.1;
+                e_1 = _a.sent();
+                libs.log({ e: e_1 }, HOST, "ERROR");
+                return [3, 4];
+            case 4: return [2];
+        }
+    });
+}); };

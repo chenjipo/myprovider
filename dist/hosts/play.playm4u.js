@@ -34,40 +34,56 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 var _this = this;
-hosts["streamtape"] = function (url, movieInfo, provider, config, callback) { return __awaiter(_this, void 0, void 0, function () {
-    var DOMAIN, HOST, headers, htmlDetail, parseHtmlDetail, videoDataUri, dataEmbed, e_1, e_2;
+hosts["play.playm4u"] = function (url, movieInfo, provider, config, callback) { return __awaiter(_this, void 0, void 0, function () {
+    var DOMAIN, HOST, headers, movieId, domainGetDirect, body, playmeData, directUrl, error_1;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
-                DOMAIN = 'https://streamtape.com';
-                HOST = 'Streamtape';
+                DOMAIN = 'https://play.playm4u.xyz';
+                HOST = 'PLAYM4U';
+                headers = {
+                    authority: 'api-plhq.playm4u.xyz',
+                    accept: '*/*',
+                    'accept-language': 'en-US,en;q=0.9',
+                    'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
+                    'origin': 'https://play.playm4u.xyz',
+                    'sec-ch-ua': '"Microsoft Edge";v="111", "Not(A:Brand";v="8", "Chromium";v="111"',
+                    'sec-ch-ua-mobile': '?0',
+                    'sec-ch-ua-platform': '"macOS"',
+                    'sec-fetch-dest': 'empty',
+                    'sec-fetch-mode': 'cors',
+                    'sec-fetch-site': 'same-site',
+                    'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/111.0.0.0 Safari/537.36 Edg/111.0.1660.14'
+                };
                 _a.label = 1;
             case 1:
-                _a.trys.push([1, 7, , 8]);
-                headers = {
-                    "referer": url,
-                    "user-agent": libs.request_getRandomUserAgent(),
-                };
-                return [4, libs.request_get(url, headers, false)];
+                _a.trys.push([1, 3, , 4]);
+                movieId = url.match(/play\/([A-z0-9]+)/i);
+                movieId = movieId ? movieId[1] : '';
+                libs.log(movieId, provider, 'MOVIE ID');
+                if (!movieId) {
+                    return [2];
+                }
+                domainGetDirect = "https://api-plhq.playm4u.xyz/apidatard/5e8dd16b70eac4137a676553/".concat(movieId);
+                body = qs.stringify({
+                    referrer: 'https://ww1.m4ufree.tv',
+                });
+                return [4, libs.request_post(domainGetDirect, headers, body)];
             case 2:
-                htmlDetail = _a.sent();
-                parseHtmlDetail = htmlDetail.match(/document\.getElementById\('norobotlink'\)\.innerHTML \= '([^']+)' *\+ *\('([^']+)/i);
-                if (!parseHtmlDetail) {
+                playmeData = _a.sent();
+                libs.log({ domainGetDirect: domainGetDirect, headers: headers, body: body, playmeData: playmeData }, provider, 'PLAY ME DATA');
+                directUrl = playmeData.data && !Array.isArray(playmeData.data) ? playmeData.data : '';
+                if (!directUrl) {
                     return [2];
                 }
-                videoDataUri = parseHtmlDetail[1] + parseHtmlDetail[2].substring(1).substring(2);
-                if (!videoDataUri) {
-                    return [2];
-                }
-                if (_.startsWith(videoDataUri, "/")) {
-                    videoDataUri = "https:".concat(videoDataUri);
-                }
-                libs.log({ videoDataUri: videoDataUri }, provider, 'videoDataUri');
-                _a.label = 3;
+                libs.log({ headers: headers, body: body, domainGetDirect: domainGetDirect, playmeData: playmeData, directUrl: directUrl }, provider, 'PLAYDATA');
+                libs.embed_callback(directUrl, provider, HOST, 'Hls', callback, 1, [], [{ file: directUrl, quality: 1080 }], {}, config.options ? config.options : {});
+                return [3, 4];
             case 3:
-                _a.trys.push([3, 5, , 6]);
-                return [4, fetch(videoDataUri, {
-                        redirect: 'manual',
-                        method: 'HEAD',
-                        headers: {
-                            "user-agent": "Mozilla/5.0 (Windows NT 6.1;
+                error_1 = _a.sent();
+                libs.log({ error: error_1 }, HOST, 'ERROR EMBED PLAYU');
+                return [3, 4];
+            case 4: return [2];
+        }
+    });
+}); };
