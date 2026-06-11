@@ -1,5 +1,5 @@
 {
-  "hosts": [
+  "providers": [
     "dist/providers/justhd.js",
     "dist/providers/qhexawatch.js",
     "dist/providers/oneoneone.js",

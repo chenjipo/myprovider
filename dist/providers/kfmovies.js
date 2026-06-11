@@ -26,7 +26,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                     if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
                     if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
                     if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                    if (t[2]) _.ops.pop(); _.trys.pop(); continue;
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
             }
             op = body.call(thisArg, _);
         } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
@@ -144,7 +145,7 @@ source.getResource = function (movieInfo, config, callback) { return __awaiter(_
                                     libs.embed_callback(item.file, PROVIDER, PROVIDER, 'Hls', callback, ++rank, tracks, [{ "file": item.file, "quality": 1080 }], {
                                         "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36",
                                         "referer": "https://".concat(domain, "/"),
-                                        "origin": "https://".concat(domain, "/"),
+                                        "origin": "https://".concat(domain),
                                     });
                                 }
                                 return [2];

@@ -26,7 +26,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                     if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
                     if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
                     if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                    if (t[2]) _.ops.pop(); _.trys.pop(); continue;
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
             }
             op = body.call(thisArg, _);
         } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
@@ -61,19 +62,19 @@ source.getResource = function (movieInfo, config, callback) { return __awaiter(_
                 return [4, dataDetail.text()];
             case 3:
                 htmlDetail = _a.sent();
-                urlDirect = htmlDetail.match(/url *\: *\'[^\']+/i);
+                urlDirect = htmlDetail.match(/url *\: *\'([^\']+)/i);
                 urlDirect = urlDirect ? urlDirect[1] : "";
                 libs.log({ urlDirect: urlDirect }, PROVIDER, "URL DIRECT");
                 if (!urlDirect) {
                     return [2];
                 }
-                token = htmlDetail.match(/\'token\' *\: *\'[^\']+/i);
+                token = htmlDetail.match(/\'token\' *\: *\'([^\']+)/i);
                 token = token ? token[1] : "";
                 libs.log({ token: token }, PROVIDER, "TOKEN");
                 if (!token) {
                     return [2];
                 }
-                expires = htmlDetail.match(/\'expires\' *\: *\'[^\']+/i);
+                expires = htmlDetail.match(/\'expires\' *\: *\'([^\']+)/i);
                 expires = expires ? expires[1] : "";
                 libs.log({ expires: expires }, PROVIDER, "EXPIRES");
                 if (!expires) {

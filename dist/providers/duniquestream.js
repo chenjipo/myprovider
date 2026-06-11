@@ -26,7 +26,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                     if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
                     if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
                     if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                    if (t[2]) _.ops.pop(); _.trys.pop(); continue;
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
             }
             op = body.call(thisArg, _);
         } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
@@ -129,7 +130,7 @@ source.getResource = function (movieInfo, config, callback) { return __awaiter(_
                 return [4, htmlDirect.text()];
             case 7:
                 text = _a.sent();
-                directUrl = text.match(/let *url *\= *\'[^\']+/i);
+                directUrl = text.match(/let *url *\= *\'([^\']+)/i);
                 directUrl = directUrl ? directUrl[1] : '';
                 libs.log({ directUrl: directUrl }, PROVIDER, 'DIRECT URL');
                 if (!directUrl) {

@@ -26,7 +26,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                     if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
                     if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
                     if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                    if (t[2]) _.ops.pop(); _.trys.pop(); continue;
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
             }
             op = body.call(thisArg, _);
         } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
@@ -57,7 +58,7 @@ source.getResource = function (movieInfo, config, callback) { return __awaiter(_
                     var src = parseIframe_1(item).attr('onclick');
                     libs.log({ src: src }, PROVIDER, 'DATA-SRC');
                     if (src && src.indexOf("streamsrcs.2embed.cc/swish?id=") != -1) {
-                        var pSrc = src.match(/go\('([^']+)/i);
+                        var pSrc = src.match(/go\(\'([^\']+)/i);
                         if (pSrc) {
                             LINK_DETAIL_1 = pSrc[1].replace(/\s/g, '%20');
                         }

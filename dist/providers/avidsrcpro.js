@@ -67,7 +67,7 @@ source.getResource = function (movieInfo, config, callback) { return __awaiter(_
                 return [4, htmlSearch.text()];
             case 3:
                 textSearch = _c.sent();
-                hashEncode = textSearch.match(/JSON\.parse\(atob\(`([^`]+)/i);
+                hashEncode = textSearch.match(/JSON\.parse\(atob\(\`([^\`]+)/i);
                 hashEncode = hashEncode ? hashEncode[1] : "";
                 libs.log({ hashEncode: hashEncode }, PROVIDER, "HASH ENCODE");
                 if (!hashEncode) {

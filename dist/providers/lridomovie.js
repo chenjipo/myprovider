@@ -74,7 +74,7 @@ source.getResource = function (movieInfo, config, callback) { return __awaiter(_
                 if (!iframe) {
                     return [2];
                 }
-                iframeUrl = iframe.match(/src=\"([^\"]+)/i);
+                iframeUrl = iframe.match(/src\=\"([^\"]+)/i);
                 iframeUrl = iframeUrl ? iframeUrl[1] : '';
                 libs.log({ iframeUrl: iframeUrl }, PROVIDER, 'IFRAME URL');
                 if (!iframeUrl) {

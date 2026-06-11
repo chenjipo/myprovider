@@ -26,7 +26,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                     if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
                     if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
                     if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                    if (t[2]) _.ops.pop(); _.trys.pop(); continue;
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
             }
             op = body.call(thisArg, _);
         } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
@@ -94,10 +95,8 @@ source.getResource = function (movieInfo, config, callback) { return __awaiter(_
                 if (!source.url) {
                     return [3, 12];
                 }
-                if (source.url.indexOf("vdrk.site") != -1) {
-                    return [4, libs.request_get(source.url, headers)];
-                }
-                return [3, 7];
+                if (!(source.url.indexOf("vdrk.site") != -1)) return [3, 7];
+                return [4, libs.request_get(source.url, headers)];
             case 6:
                 qualityData = _g.sent();
                 libs.log({ qualityData: qualityData }, PROVIDER, "QUALITY DATA");
@@ -119,13 +118,11 @@ source.getResource = function (movieInfo, config, callback) { return __awaiter(_
                 }
                 return [3, 12];
             case 7:
-                if (source.url.indexOf("/playlist.m3u8") != -1) {
-                    return [4, fetch(source.url, {
-                            headers: headers,
-                            method: "GET"
-                        })];
-                }
-                return [3, 10];
+                if (!(source.url.indexOf("/playlist.m3u8") != -1)) return [3, 10];
+                return [4, fetch(source.url, {
+                        headers: headers,
+                        method: "GET"
+                    })];
             case 8:
                 dataQuality = _g.sent();
                 return [4, dataQuality.text()];
