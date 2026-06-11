@@ -26,7 +26,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                     if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
                     if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
                     if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                    if (t[2]) _.ops.pop(); _.trys.pop(); continue;
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
             }
             op = body.call(thisArg, _);
         } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
@@ -35,48 +36,41 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 var _this = this;
 hosts["vidstream"] = function (url, movieInfo, provider, config, callback) { return __awaiter(_this, void 0, void 0, function () {
-    var DOMAIN, HOST, headers, parseEmbed, scriptEval, unpack, source, parseDirect, directUrl;
+    var userAgent, DOMAIN, HOST, subParse, subs, headers;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
+                userAgent = libs.request_getRandomUserAgent();
                 DOMAIN = 'https://vidstream.pro';
                 HOST = 'Vidstream';
-                headers = {
-                    'content-type': 'application/json;charset=UTF-8',
-                    'Referer': config.options.link_detail,
-                };
-                return [4, libs.request_get(url, headers, true)];
+                subParse = url.match(/\?sub\.info\=([^\&]+)/i);
+                subParse = subParse ? decodeURIComponent(subParse[1]) : '';
+                libs.log({ subParse: subParse, url: url }, HOST, 'SUBPARSE');
+                subs = [];
+                if (!subParse) return [3, 2];
+                return [4, libs.request_get(subParse)];
             case 1:
-                parseEmbed = _a.sent();
-                scriptEval = '';
-                parseEmbed('script').each(function (key, item) {
-                    if (parseEmbed(item).text().indexOf('eval(') != -1) {
-                        scriptEval = parseEmbed(item).text();
-                    }
-                });
-                if (!scriptEval) {
-                    return [2];
-                }
-                unpack = libs.string_unpack(scriptEval);
-                libs.log({ unpack: unpack }, provider, 'UNPACK');
-                source = unpack.match(/file *\: *\"([^\"]+)/i);
-                source = source ? source[1] : '';
-                if (!source) {
-                    return [2];
-                }
-                libs.log({ source: source }, provider, 'SOURCE');
-                return [4, libs.request_get(source, {})];
+                subs = _a.sent();
+                libs.log({ subs: subs }, HOST, 'SUBTITLE');
+                _a.label = 2;
             case 2:
-                parseDirect = _a.sent();
-                directUrl = parseDirect.match(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/i);
-                directUrl = directUrl ? directUrl[0] : '';
-                if (!directUrl) {
-                    return [2];
-                }
-                libs.log({ directUrl: directUrl }, provider, 'DIRECT URL');
-                libs.embed_callback(directUrl, provider, HOST, 'Hls', callback, 1, [], [{ file: directUrl, quality: 1080 }], {
-                    'Referer': DOMAIN,
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+                headers = {
+                    'Referer': "https://fmovies24.to/",
+                    'user-agent': libs.request_getRandomUserAgent()
+                };
+                callback({
+                    callback: {
+                        provider: provider,
+                        host: HOST,
+                        url: url,
+                        headers: headers,
+                        metadata: {
+                            subs: subs,
+                            url_webview: url,
+                        },
+                        callback: callback,
+                        beforeLoadScript: "var open = XMLHttpRequest.prototype.open;\n            XMLHttpRequest.prototype.open = function() {\n                window.ReactNativeWebView.postMessage(JSON.stringify({arguments}));\n                open.apply(this, arguments);\n            };"
+                    }
                 });
                 return [2];
         }

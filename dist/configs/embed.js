@@ -9,7 +9,6 @@ var __assign = (this && this.__assign) || function () {
     };
     return __assign.apply(this, arguments);
 };
-
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -19,14 +18,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-
 var __generator = (this && this.__generator) || function (thisArg, body) {
     var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
     return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -39,14 +37,14 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                     if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
                     if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
                     if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                    if (t[2]) _.ops.pop(); _.trys.pop(); continue;
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
             }
             op = body.call(thisArg, _);
         } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-
 var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
         if (ar || !(i in from)) {
@@ -56,9 +54,7 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     }
     return to.concat(ar || Array.prototype.slice.call(from));
 };
-
 var _this = this;
-
 libs.embed_redirect = function (embed_1, quality_1, movieInfo_1, provider_1, callback_1, host_1, subs_1) {
     var args_1 = [];
     for (var _i = 7; _i < arguments.length; _i++) {
@@ -107,7 +103,6 @@ libs.embed_redirect = function (embed_1, quality_1, movieInfo_1, provider_1, cal
         });
     });
 };
-
 libs.embed_parse_source = function (html) {
     var source = html.match(/sources *\: *([^\]]+)/i);
     source = source ? source[1] + "]" : "[]";
@@ -116,7 +111,6 @@ libs.embed_parse_source = function (html) {
     eval(source);
     return parse;
 };
-
 libs.embed_callback = function (urlDirect, provider, host, quality, callback, rank, subs, direct_quality, headers, options) {
     if (subs === void 0) { subs = []; }
     if (direct_quality === void 0) { direct_quality = []; }
@@ -144,35 +138,32 @@ libs.embed_callback = function (urlDirect, provider, host, quality, callback, ra
     }
     callback(__assign({ file: urlDirect, quality: quality, host: host, source: provider, provider: libs.string_provider(provider, rank), subs: parseSubs, direct_quality: direct_quality, headers: headers }, options));
 };
-
-libs.parse_size = function (file, provider, host, type, callback, rank, tracks) {
-    return __awaiter(_this, void 0, void 0, function () {
-        var directSizes, patternSize, directQuality, _i, patternSize_1, patternItem, sizeQuality;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0: return [4, libs.request_get(file, {})];
-                case 1:
-                    directSizes = _a.sent();
-                    patternSize = directSizes.match(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/ig);
-                    if (!patternSize) {
-                        libs.embed_callback(file, provider, host, item.type, callback, ++rank, tracks);
-                        return [2];
-                    }
-                    directQuality = [];
-                    libs.log({ patternSize: patternSize }, provider, 'PATTERN SIZE');
-                    for (_i = 0, patternSize_1 = patternSize; _i < patternSize_1.length; _i++) {
-                        patternItem = patternSize_1[_i];
-                        sizeQuality = patternItem.match(/\/([0-9]+)\//i);
-                        sizeQuality = sizeQuality ? sizeQuality[1] : 'HD';
-                        directQuality.push({
-                            file: patternItem,
-                            quality: sizeQuality
-                        });
-                    }
-                    libs.log({ directQuality: directQuality }, provider, 'DIRECT QUALITY');
-                    libs.embed_callback(file, provider, host, 'Hls', callback, ++rank, tracks, directQuality);
+libs.parse_size = function (file, provider, host, type, callback, rank, tracks) { return __awaiter(_this, void 0, void 0, function () {
+    var directSizes, patternSize, directQuality, _i, patternSize_1, patternItem, sizeQuality;
+    return __generator(this, function (_a) {
+        switch (_a.label) {
+            case 0: return [4, libs.request_get(file, {})];
+            case 1:
+                directSizes = _a.sent();
+                patternSize = directSizes.match(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/ig);
+                if (!patternSize) {
+                    libs.embed_callback(file, provider, host, item.type, callback, ++rank, tracks);
                     return [2];
-            }
-        });
+                }
+                directQuality = [];
+                libs.log({ patternSize: patternSize }, provider, 'PATTERN SIZE');
+                for (_i = 0, patternSize_1 = patternSize; _i < patternSize_1.length; _i++) {
+                    patternItem = patternSize_1[_i];
+                    sizeQuality = patternItem.match(/\/([0-9]+)\//i);
+                    sizeQuality = sizeQuality ? sizeQuality[1] : 'HD';
+                    directQuality.push({
+                        file: patternItem,
+                        quality: sizeQuality
+                    });
+                }
+                libs.log({ directQuality: directQuality }, provider, 'DIRECT QUALITY');
+                libs.embed_callback(file, provider, host, 'Hls', callback, ++rank, tracks, directQuality);
+                return [2];
+        }
     });
-};
+}); };

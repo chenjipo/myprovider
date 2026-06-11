@@ -7,7 +7,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-
 var __generator = (this && this.__generator) || function (thisArg, body) {
     var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
     return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
@@ -27,14 +26,14 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                     if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
                     if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
                     if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                    if (t[2]) _.ops.pop(); _.trys.pop(); continue;
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
             }
             op = body.call(thisArg, _);
         } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-
 var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
         if (ar || !(i in from)) {
@@ -44,75 +43,71 @@ var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
     }
     return to.concat(ar || Array.prototype.slice.call(from));
 };
-
 var _this = this;
-
-callbacksEmbed["vidcloud"] = function (dataCallback, provider, host, callback, metadata) {
-    return __awaiter(_this, void 0, void 0, function () {
-        var data, parse, source1, source2, source3, tracks, rank, _i, source3_1, item, directSizes, patternSize, directQuality, _a, patternSize_1, patternItem, sizeQuality;
-        return __generator(this, function (_b) {
-            switch (_b.label) {
-                case 0:
-                    if (!dataCallback) {
-                        return [2];
-                    }
-                    libs.log(dataCallback, provider, 'DATA CALLBACK');
-                    data = JSON.parse(dataCallback);
-                    if (!data.responseURL) {
-                        return [2];
-                    }
-                    if (!(data.responseURL.indexOf("getSources") != -1)) return [3, 4];
-                    parse = JSON.parse(data.responseText);
-                    source1 = parse['sources'] || [];
-                    source2 = parse['sourcesBackup'] || [];
-                    source3 = __spreadArray(__spreadArray([], source1, true), source2, true);
-                    tracks = parse['tracks'] || [];
-                    libs.log({ source3: source3, tracks: tracks }, provider, 'SOURCES');
-                    rank = 0;
-                    _i = 0, source3_1 = source3;
-                    _b.label = 1;
-                case 1:
-                    if (!(_i < source3_1.length)) return [3, 4];
-                    item = source3_1[_i];
-                    if (!item.file) {
-                        return [3, 3];
-                    }
-                    if (item.file.indexOf('thedaywestream') !== -1) {
-                        return [3, 3];
-                    }
-                    if (item.file.indexOf('birdsystem') !== -1) {
-                        return [3, 3];
-                    }
-                    return [4, libs.request_get(item.file, {})];
-                case 2:
-                    directSizes = _b.sent();
-                    patternSize = directSizes.match(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/ig);
-                    if (!patternSize) {
-                        libs.embed_callback(item.file, provider, host, item.type, callback, ++rank, tracks);
-                        return [3, 3];
-                    }
-                    directQuality = [];
-                    libs.log({ patternSize: patternSize }, provider, 'PATTERN SIZE');
-                    for (_a = 0, patternSize_1 = patternSize; _a < patternSize_1.length; _a++) {
-                        patternItem = patternSize_1[_a];
-                        sizeQuality = patternItem.match(/\/([0-9]+)\//i);
-                        sizeQuality = sizeQuality ? sizeQuality[1] : 'HD';
-                        directQuality.push({
-                            file: patternItem,
-                            quality: sizeQuality
-                        });
-                    }
-                    libs.log({ directQuality: directQuality }, provider, 'DIRECT QUALITY');
-                    libs.embed_callback(item.file, provider, host, 'Hls', callback, ++rank, tracks, directQuality, {}, {
-                        is_end_webview: true,
-                        url_webview: metadata.url_webview || ''
+callbacksEmbed["vidcloud"] = function (dataCallback, provider, host, callback, metadata) { return __awaiter(_this, void 0, void 0, function () {
+    var data, parse, source1, source2, source3, tracks, rank, _i, source3_1, item, directSizes, patternSize, directQuality, _a, patternSize_1, patternItem, sizeQuality;
+    return __generator(this, function (_b) {
+        switch (_b.label) {
+            case 0:
+                if (!dataCallback) {
+                    return [2];
+                }
+                libs.log(dataCallback, provider, 'DATA CALLBACK');
+                data = JSON.parse(dataCallback);
+                if (!data.responseURL) {
+                    return [2];
+                }
+                if (!(data.responseURL.indexOf("getSources") != -1)) return [3, 4];
+                parse = JSON.parse(data.responseText);
+                source1 = parse['sources'] || [];
+                source2 = parse['sourcesBackup'] || [];
+                source3 = __spreadArray(__spreadArray([], source1, true), source2, true);
+                tracks = parse['tracks'] || [];
+                libs.log({ source3: source3, tracks: tracks }, provider, 'SOURCES');
+                rank = 0;
+                _i = 0, source3_1 = source3;
+                _b.label = 1;
+            case 1:
+                if (!(_i < source3_1.length)) return [3, 4];
+                item = source3_1[_i];
+                if (!item.file) {
+                    return [3, 3];
+                }
+                if (item.file.indexOf('thedaywestream') !== -1) {
+                    return [3, 3];
+                }
+                if (item.file.indexOf('birdsystem') !== -1) {
+                    return [3, 3];
+                }
+                return [4, libs.request_get(item.file, {})];
+            case 2:
+                directSizes = _b.sent();
+                patternSize = directSizes.match(/https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)/ig);
+                if (!patternSize) {
+                    libs.embed_callback(item.file, provider, host, item.type, callback, ++rank, tracks);
+                    return [3, 3];
+                }
+                directQuality = [];
+                libs.log({ patternSize: patternSize }, provider, 'PATTERN SIZE');
+                for (_a = 0, patternSize_1 = patternSize; _a < patternSize_1.length; _a++) {
+                    patternItem = patternSize_1[_a];
+                    sizeQuality = patternItem.match(/\/([0-9]+)\//i);
+                    sizeQuality = sizeQuality ? sizeQuality[1] : 'HD';
+                    directQuality.push({
+                        file: patternItem,
+                        quality: sizeQuality
                     });
-                    _b.label = 3;
-                case 3:
-                    _i++;
-                    return [3, 1];
-                case 4: return [2];
-            }
-        });
+                }
+                libs.log({ directQuality: directQuality }, provider, 'DIRECT QUALITY');
+                libs.embed_callback(item.file, provider, host, 'Hls', callback, ++rank, tracks, directQuality, {}, {
+                    is_end_webview: true,
+                    url_webview: metadata.url_webview || ''
+                });
+                _b.label = 3;
+            case 3:
+                _i++;
+                return [3, 1];
+            case 4: return [2];
+        }
     });
-};
+}); };

@@ -13,7 +13,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
-        while (_) try {
+        while (g && (g = 0, op[0] && (_ = 0)), _) try {
             if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done) return t;
             if (y = 0, t) op = [op[0] & 2, t.value];
             switch (op[0]) {
@@ -26,7 +26,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                     if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
                     if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
                     if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                    if (t[2]) _.ops.pop(); _.trys.pop(); continue;
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
             }
             op = body.call(thisArg, _);
         } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
@@ -159,7 +160,7 @@ hosts["closeload"] = function (url, movieInfo, provider, config, callback) { ret
                 getKey = getKey ? getKey[1] : '';
                 libs.log({ getKey: getKey }, provider, 'GetKey');
                 keyName = getKey.replace(/[\s'"]/g, '');
-                varName = unpacker.match(new RegExp(keyName + '\\=[A-z0-9]+\\(([^\)]*)\\)', 'i'));
+                varName = unpacker.match(new RegExp(keyName + '\\=[A-z0-9]+\\(([^\\)]*)\\)', 'i'));
                 varName = varName ? varName[1] : '';
                 varName = JSON.parse(varName);
                 libs.log({ varName: varName }, provider, 'VarName_1');

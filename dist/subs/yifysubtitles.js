@@ -7,10 +7,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-
 var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
+    return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
@@ -35,71 +34,67 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-
 var _this = this;
-
-subs.getResource = function (movieInfo, config, callback) {
-    return __awaiter(_this, void 0, void 0, function () {
-        var PROVIDER, urlSearch, dataSearch_1, subLang_1, i, _i, _a, item, e_1;
-        return __generator(this, function (_b) {
-            switch (_b.label) {
-                case 0:
-                    PROVIDER = "YTSSubs";
-                    _b.label = 1;
-                case 1:
-                    _b.trys.push([1, 3, , 4]);
-                    if (!movieInfo.imdb_id) {
-                        return [2];
-                    }
-                    urlSearch = "https://yifysubtitles.ch/movie-imdb/".concat(movieInfo.imdb_id);
-                    return [4, libs.request_post(urlSearch, {}, {}, true)];
-                case 2:
-                    dataSearch_1 = _b.sent();
-                    subLang_1 = {};
-                    dataSearch_1("tr").each(function (key, item) {
-                        var dataId = dataSearch_1(item).attr("data-id");
-                        if (dataId) {
-                            var title = dataSearch_1(item).find("a").text().replace("subtitle", "");
-                            var lang = dataSearch_1(item).find("span.sub-lang").text();
-                            var url = dataSearch_1(item)
-                                .find("a")
-                                .attr("href")
-                                .replace("/subtitles/", "/subtitle/");
-                            var link = "https://yifysubtitles.ch".concat(url, ".zip");
-                            if (!subLang_1[lang]) {
-                                subLang_1[lang] = [];
-                                if (title && lang && link) {
-                                    subLang_1[lang].push({ title: title, lang: lang, link: link });
-                                }
+subs.getResource = function (movieInfo, config, callback) { return __awaiter(_this, void 0, void 0, function () {
+    var PROVIDER, urlSearch, dataSearch_1, subLang_1, i, _i, _a, item, e_1;
+    return __generator(this, function (_b) {
+        switch (_b.label) {
+            case 0:
+                PROVIDER = "YTSSubs";
+                _b.label = 1;
+            case 1:
+                _b.trys.push([1, 3, , 4]);
+                if (!movieInfo.imdb_id) {
+                    return [2];
+                }
+                urlSearch = "https://yifysubtitles.ch/movie-imdb/".concat(movieInfo.imdb_id);
+                return [4, libs.request_post(urlSearch, {}, {}, true)];
+            case 2:
+                dataSearch_1 = _b.sent();
+                subLang_1 = {};
+                dataSearch_1("tr").each(function (key, item) {
+                    var dataId = dataSearch_1(item).attr("data-id");
+                    if (dataId) {
+                        var title = dataSearch_1(item).find("a").text().replace("subtitle", "");
+                        var lang = dataSearch_1(item).find("span.sub-lang").text();
+                        var url = dataSearch_1(item)
+                            .find("a")
+                            .attr("href")
+                            .replace("/subtitles/", "/subtitle/");
+                        var link = "https://yifysubtitles.ch".concat(url, ".zip");
+                        if (!subLang_1[lang]) {
+                            subLang_1[lang] = [];
+                            if (title && lang && link) {
+                                subLang_1[lang].push({ title: title, lang: lang, link: link });
                             }
                         }
-                    });
-                    for (i in subLang_1) {
-                        for (_i = 0, _a = subLang_1[i]; _i < _a.length; _i++) {
-                            item = _a[_i];
-                            libs.log({
-                                file: item.link,
-                                kind: "Captions",
-                                label: item.lang,
-                                type: "download",
-                                provider: PROVIDER,
-                            }, PROVIDER, "== CALLBACK ==>");
-                            callback({
-                                file: item.link,
-                                kind: "Captions",
-                                label: item.lang,
-                                type: "zip",
-                                provider: PROVIDER,
-                            });
-                        }
                     }
-                    return [2];
-                case 3:
-                    e_1 = _b.sent();
-                    libs.log({ e: e_1 }, PROVIDER, "ERROR");
-                    return [3, 4];
-                case 4: return [2, true];
-            }
-        });
+                });
+                for (i in subLang_1) {
+                    for (_i = 0, _a = subLang_1[i]; _i < _a.length; _i++) {
+                        item = _a[_i];
+                        libs.log({
+                            file: item.link,
+                            kind: "Captions",
+                            label: item.lang,
+                            type: "download",
+                            provider: PROVIDER,
+                        }, PROVIDER, "== CALLBACK ==>");
+                        callback({
+                            file: item.link,
+                            kind: "Captions",
+                            label: item.lang,
+                            type: "zip",
+                            provider: PROVIDER,
+                        });
+                    }
+                }
+                return [2];
+            case 3:
+                e_1 = _b.sent();
+                libs.log({ e: e_1 }, PROVIDER, "ERROR");
+                return [3, 4];
+            case 4: return [2, true];
+        }
     });
-};
+}); };

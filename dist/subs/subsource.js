@@ -7,7 +7,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-
 var __generator = (this && this.__generator) || function (thisArg, body) {
     var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
     return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
@@ -27,87 +26,89 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                     if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
                     if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
                     if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                    if (t[2]) _.ops.pop(); _.trys.pop(); continue;
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
             }
             op = body.call(thisArg, _);
         } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-
 var _this = this;
-
-subs.getResource = function (movieInfo, config, callback) {
-    return __awaiter(_this, void 0, void 0, function () {
-        var PROVIDER, DOMAIN, langDirect, url, subsData, _i, _a, item, lang, link, subLinksData, downloadToken, downloadTokenLink, parseLang, e_1;
-        return __generator(this, function (_b) {
-            switch (_b.label) {
-                case 0:
-                    PROVIDER = "SubSource";
-                    DOMAIN = "https://api.subsource.net";
-                    _b.label = 1;
-                case 1:
-                    _b.trys.push([1, 7, , 8]);
-                    langDirect = {
-                        "english": "English",
-                        "arabic": "Arabic",
-                        "vietnamese": "Vietnamese",
-                        "indonesian": "Indonesia",
-                        "ukrainian": "Ukrainian",
-                        "turkish": "Turkish",
-                        "french": "French",
-                        "greek": "Greek",
-                        "hebrew": "Hebrew",
-                        "italian": "Italian",
-                        "polish": "Polish",
-                        "portuguese": "Portuguese",
-                        "rusian": "Russian",
-                        "spanish": "Spanish",
-                        "swedish": "Swedish",
-                        "thai": "Thai",
-                    };
-                    url = DOMAIN + "/v1/subtitles/" + (libs.url_slug_search ? libs.url_slug_search(movieInfo, '-') : movieInfo.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')) + "-" + movieInfo.year;
-                    if (movieInfo.type == 'tv') {
-                        url += "/season-" + movieInfo.season;
-                    }
-                    return [4, libs.request_get(url, {}, false)];
-                case 2:
-                    subsData = _b.sent();
-                    libs.log({ subsData: subsData }, PROVIDER, "SUB DATA");
-                    if (!subsData || !subsData.subtitles) return [2];
-                    _i = 0, _a = subsData.subtitles;
-                    _b.label = 3;
-                case 3:
-                    if (!(_i < _a.length)) return [3, 6];
-                    item = _a[_i];
-                    lang = item.language;
-                    link = DOMAIN + "/v1/subtitle/" + item.link;
-                    return [4, libs.request_get(link, {}, false)];
-                case 4:
-                    subLinksData = _b.sent();
-                    downloadToken = subLinksData && subLinksData.subtitle && subLinksData.subtitle.download_token;
-                    libs.log({ lang: lang, link: link, downloadToken: downloadToken }, PROVIDER, "DOWNLOAD TOKEN");
-                    if (!downloadToken) return [3, 5];
-                    downloadTokenLink = DOMAIN + "/v1/subtitle/download/" + downloadToken;
-                    parseLang = langDirect[lang] || lang;
-                    callback({
-                        file: downloadTokenLink,
-                        kind: "Captions_Season",
-                        label: parseLang,
-                        type: "zip",
-                        provider: PROVIDER,
-                    });
-                    _b.label = 5;
-                case 5:
-                    _i++;
-                    return [3, 3];
-                case 6: return [2];
-                case 7:
-                    e_1 = _b.sent();
-                    libs.log({ e: e_1 }, PROVIDER, "ERROR");
-                    return [3, 8];
-                case 8: return [2, true];
-            }
-        });
+subs.getResource = function (movieInfo, config, callback) { return __awaiter(_this, void 0, void 0, function () {
+    var PROVIDER, DOMAIN, langDirect, url, subsData, _i, _a, item, lang, link, subLinksData, downloadToken, downloadTokenLink, parseLang, e_1;
+    return __generator(this, function (_b) {
+        switch (_b.label) {
+            case 0:
+                PROVIDER = "SubSource";
+                DOMAIN = "https://api.subsource.net";
+                _b.label = 1;
+            case 1:
+                _b.trys.push([1, 7, , 8]);
+                langDirect = {
+                    "english": "English",
+                    "arabic": "Arabic",
+                    "vietnamese": "Vietnamese",
+                    "indonesian": "Indonesia",
+                    "ukrainian": "Ukrainian",
+                    "turkish": "Turkish",
+                    "french": "French",
+                    "greek": "Greek",
+                    "hebrew": "Hebrew",
+                    "italian": "Italian",
+                    "polish": "Polish",
+                    "portuguese": "Portuguese",
+                    "rusian": "Russian",
+                    "spanish": "Spanish",
+                    "swedish": "Swedish",
+                    "thai": "Thai",
+                };
+                url = "".concat(DOMAIN, "/v1/subtitles/").concat(libs.url_slug_search(movieInfo, '-'), "-").concat(movieInfo.year);
+                if (movieInfo.type == 'tv') {
+                    url += "/season-".concat(movieInfo.season);
+                }
+                return [4, libs.request_get(url, {}, false)];
+            case 2:
+                subsData = _b.sent();
+                libs.log({ subsData: subsData }, PROVIDER, "SUB DATA");
+                _i = 0, _a = subsData.subtitles;
+                _b.label = 3;
+            case 3:
+                if (!(_i < _a.length)) return [3, 6];
+                item = _a[_i];
+                lang = item.language;
+                link = "".concat(DOMAIN, "/v1/subtitle/").concat(item.link);
+                return [4, libs.request_get(link, {}, false)];
+            case 4:
+                subLinksData = _b.sent();
+                downloadToken = subLinksData.subtitle.download_token;
+                libs.log({ lang: lang, link: link, downloadToken: downloadToken }, PROVIDER, "DOWNLOAD TOKEN");
+                if (!downloadToken) {
+                    return [3, 5];
+                }
+                downloadTokenLink = "".concat(DOMAIN, "/v1/subtitle/download/").concat(downloadToken);
+                libs.log({ downloadTokenLink: downloadTokenLink }, PROVIDER, "DOWNLOAD TOKEN LINK");
+                parseLang = langDirect[lang];
+                if (!parseLang) {
+                    return [3, 5];
+                }
+                callback({
+                    file: downloadTokenLink,
+                    kind: "Captions_Season",
+                    label: parseLang,
+                    type: "zip",
+                    provider: PROVIDER,
+                });
+                _b.label = 5;
+            case 5:
+                _i++;
+                return [3, 3];
+            case 6: return [2];
+            case 7:
+                e_1 = _b.sent();
+                libs.log({ e: e_1 }, PROVIDER, "ERROR");
+                return [3, 8];
+            case 8: return [2, true];
+        }
     });
-};
+}); };

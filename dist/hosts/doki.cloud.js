@@ -37,7 +37,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                     if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
                     if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
                     if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                    if (t[2]) _.ops.pop(); _.trys.pop(); continue;
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
             }
             op = body.call(thisArg, _);
         } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
@@ -65,7 +66,7 @@ hosts["dokicloud"] = function (url, movieInfo, provider, config, callback) { ret
                 headers = {
                     'referer': 'https://fmovies.ps'
                 };
-                id = url.match(/embed\-0-9]+\/([A-z0-9]+)/);
+                id = url.match(/embed\-[0-9]+\/([A-z0-9]+)/);
                 id = id ? id[1] : '';
                 libs.log({
                     id: id

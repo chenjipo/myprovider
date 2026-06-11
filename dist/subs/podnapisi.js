@@ -7,10 +7,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-
 var __generator = (this && this.__generator) || function (thisArg, body) {
-    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
-    return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
+    var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g = Object.create((typeof Iterator === "function" ? Iterator : Object).prototype);
+    return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
     function verb(n) { return function (v) { return step([n, v]); }; }
     function step(op) {
         if (f) throw new TypeError("Generator is already executing.");
@@ -35,116 +34,112 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-
 var _this = this;
-
-subs.getResource = function (movieInfo, config, callback) {
-    return __awaiter(_this, void 0, void 0, function () {
-        var PROVIDER, SEARCH_URL, slug, urlSearch, dataSearch, ID, _i, _a, item, urlDetail, parseSub_1, validLangs_1, e_1;
-        return __generator(this, function (_b) {
-            switch (_b.label) {
-                case 0:
-                    PROVIDER = "Podnapisi";
-                    SEARCH_URL = "https://www.podnapisi.net/en/moviedb/search/";
-                    slug = "".concat(libs.url_slug_search(movieInfo, "-"));
-                    urlSearch = "".concat(SEARCH_URL, "?keywords=").concat(slug);
-                    libs.log({ urlSearch: urlSearch, year: movieInfo.year, type: movieInfo.type }, PROVIDER, "==URL SEARCH==");
-                    _b.label = 1;
-                case 1:
-                    _b.trys.push([1, 4, , 5]);
-                    return [4, libs.request_get(urlSearch, {
-                            "X-Requested-With": "XMLHttpRequest",
-                        }, false)];
-                case 2:
-                    dataSearch = _b.sent();
-                    libs.log({ dataSearch: dataSearch }, PROVIDER, "==DATA SEARCH==");
-                    ID = "";
-                    for (_i = 0, _a = dataSearch.data; _i < _a.length; _i++) {
-                        item = _a[_i];
-                        if ("".concat(libs.url_slug_search(movieInfo, "-"), "-").concat(movieInfo.year) ==
-                            item.slug &&
-                            !ID) {
-                            ID = item.id;
+subs.getResource = function (movieInfo, config, callback) { return __awaiter(_this, void 0, void 0, function () {
+    var PROVIDER, SEARCH_URL, slug, urlSearch, dataSearch, ID, _i, _a, item, urlDetail, parseSub_1, validLangs_1, e_1;
+    return __generator(this, function (_b) {
+        switch (_b.label) {
+            case 0:
+                PROVIDER = "Podnapisi";
+                SEARCH_URL = "https://www.podnapisi.net/en/moviedb/search/";
+                slug = "".concat(libs.url_slug_search(movieInfo, "-"));
+                urlSearch = "".concat(SEARCH_URL, "?keywords=").concat(slug);
+                libs.log({ urlSearch: urlSearch, year: movieInfo.year, type: movieInfo.type }, PROVIDER, "==URL SEARCH==");
+                _b.label = 1;
+            case 1:
+                _b.trys.push([1, 4, , 5]);
+                return [4, libs.request_get(urlSearch, {
+                        "X-Requested-With": "XMLHttpRequest",
+                    }, false)];
+            case 2:
+                dataSearch = _b.sent();
+                libs.log({ dataSearch: dataSearch }, PROVIDER, "==DATA SEARCH==");
+                ID = "";
+                for (_i = 0, _a = dataSearch.data; _i < _a.length; _i++) {
+                    item = _a[_i];
+                    if ("".concat(libs.url_slug_search(movieInfo, "-"), "-").concat(movieInfo.year) ==
+                        item.slug &&
+                        !ID) {
+                        ID = item.id;
+                    }
+                }
+                libs.log({ ID: ID, slug: "".concat(libs.url_slug_search(movieInfo, "-"), "-").concat(movieInfo.year) }, PROVIDER, "==ID==");
+                if (!ID) {
+                    return [2];
+                }
+                urlDetail = "https://www.podnapisi.net/subtitles/search/".concat(ID);
+                return [4, libs.request_get(urlDetail, {}, true)];
+            case 3:
+                parseSub_1 = _b.sent();
+                validLangs_1 = [
+                    { code: "ar", name: "Arabic", id: "sublanguageid-ara" },
+                    { code: "zh", name: "Chinese", id: "sublanguageid-chi" },
+                    { code: "hr", name: "Croatian", id: "sublanguageid-hrv" },
+                    { code: "nl", name: "Dutch", id: "sublanguageid-dut" },
+                    { code: "no", name: "Norwegian", id: "sublanguageid-nor" },
+                    { code: "en", name: "English", id: "sublanguageid-eng" },
+                    { code: "fr", name: "French", id: "sublanguageid-fre" },
+                    { code: "de", name: "German", id: "sublanguageid-ger" },
+                    { code: "el", name: "Greek", id: "sublanguageid-ell" },
+                    { code: "he", name: "Hebrew", id: "sublanguageid-heb" },
+                    { code: "it", name: "Italian", id: "sublanguageid-ita" },
+                    { code: "id", name: "Indonesia", id: "sublanguageid-ind" },
+                    { code: "ja", name: "Japanese", id: "sublanguageid-jpn" },
+                    { code: "la", name: "Latin", id: "sublanguageid-lav" },
+                    { code: "pl", name: "Polish", id: "sublanguageid-pol" },
+                    { code: "pt", name: "Portuguese", id: "sublanguageid-por" },
+                    { code: "ro", name: "Romanian", id: "sublanguageid-rum" },
+                    { code: "ru", name: "Russian", id: "sublanguageid-rus" },
+                    { code: "es", name: "Spanish", id: "sublanguageid-spa" },
+                    { code: "sr", name: "Serbian", id: "sublanguageid-scc" },
+                    { code: "sv", name: "Swedish", id: "sublanguageid-swe" },
+                    { code: "th", name: "Thai", id: "sublanguageid-tha" },
+                    { code: "tr", name: "Turkish", id: "sublanguageid-tur" },
+                    { code: "ukr", name: "Ukrainian", id: "sublanguageid-ukr" },
+                    { code: "vi", name: "Vietnamese", id: "sublanguageid-vie" },
+                ];
+                parseSub_1("tr.subtitle-entry").each(function (key, item) {
+                    var link = parseSub_1(item).attr("data-href");
+                    var title = parseSub_1(item).find("span.release").text();
+                    if (movieInfo.type == "tv") {
+                        var episode = "S".concat(movieInfo.season < 10 ? "0" + movieInfo.season : movieInfo.season, "E").concat(movieInfo.episode < 10 ? "0" + movieInfo.episode : movieInfo.episode);
+                        if (title.indexOf(episode) == -1) {
+                            link = "";
                         }
                     }
-                    libs.log({ ID: ID, slug: "".concat(libs.url_slug_search(movieInfo, "-"), "-").concat(movieInfo.year) }, PROVIDER, "==ID==");
-                    if (!ID) {
-                        return [2];
+                    if (link) {
+                        libs.log({ link: link, title: title }, PROVIDER, "SUBS LINK ====>");
+                        var linkData = link.split("/");
+                        if (linkData.length > 2) {
+                            var langData = linkData[2].split("-");
+                            var lang_1 = langData[0];
+                            var validLang = validLangs_1.find(function (item) { return item.code == lang_1; });
+                            if (validLang) {
+                                link = "https://www.podnapisi.net/".concat(link, "/download");
+                                callback({
+                                    file: link,
+                                    kind: "Captions",
+                                    label: validLang.name,
+                                    type: "zip",
+                                    provider: PROVIDER,
+                                });
+                                libs.log({
+                                    file: link,
+                                    kind: "Captions",
+                                    label: validLang.name,
+                                    type: "download",
+                                    provider: PROVIDER,
+                                }, PROVIDER, "SUBS CALLBACK ====>");
+                            }
+                        }
                     }
-                    urlDetail = "https://www.podnapisi.net/subtitles/search/".concat(ID);
-                    return [4, libs.request_get(urlDetail, {}, true)];
-                case 3:
-                    parseSub_1 = _b.sent();
-                    validLangs_1 = [
-                        { code: "ar", name: "Arabic", id: "sublanguageid-ara" },
-                        { code: "zh", name: "Chinese", id: "sublanguageid-chi" },
-                        { code: "hr", name: "Croatian", id: "sublanguageid-hrv" },
-                        { code: "nl", name: "Dutch", id: "sublanguageid-dut" },
-                        { code: "no", name: "Norwegian", id: "sublanguageid-nor" },
-                        { code: "en", name: "English", id: "sublanguageid-eng" },
-                        { code: "fr", name: "French", id: "sublanguageid-fre" },
-                        { code: "de", name: "German", id: "sublanguageid-ger" },
-                        { code: "el", name: "Greek", id: "sublanguageid-ell" },
-                        { code: "he", name: "Hebrew", id: "sublanguageid-heb" },
-                        { code: "it", name: "Italian", id: "sublanguageid-ita" },
-                        { code: "id", name: "Indonesia", id: "sublanguageid-ind" },
-                        { code: "ja", name: "Japanese", id: "sublanguageid-jpn" },
-                        { code: "la", name: "Latin", id: "sublanguageid-lav" },
-                        { code: "pl", name: "Polish", id: "sublanguageid-pol" },
-                        { code: "pt", name: "Portuguese", id: "sublanguageid-por" },
-                        { code: "ro", name: "Romanian", id: "sublanguageid-rum" },
-                        { code: "ru", name: "Russian", id: "sublanguageid-rus" },
-                        { code: "es", name: "Spanish", id: "sublanguageid-spa" },
-                        { code: "sr", name: "Serbian", id: "sublanguageid-scc" },
-                        { code: "sv", name: "Swedish", id: "sublanguageid-swe" },
-                        { code: "th", name: "Thai", id: "sublanguageid-tha" },
-                        { code: "tr", name: "Turkish", id: "sublanguageid-tur" },
-                        { code: "ukr", name: "Ukrainian", id: "sublanguageid-ukr" },
-                        { code: "vi", name: "Vietnamese", id: "sublanguageid-vie" },
-                    ];
-                    parseSub_1("tr.subtitle-entry").each(function (key, item) {
-                        var link = parseSub_1(item).attr("data-href");
-                        var title = parseSub_1(item).find("span.release").text();
-                        if (movieInfo.type == "tv") {
-                            var episode = "S".concat(movieInfo.season < 10 ? "0" + movieInfo.season : movieInfo.season, "E").concat(movieInfo.episode < 10 ? "0" + movieInfo.episode : movieInfo.episode);
-                            if (title.indexOf(episode) == -1) {
-                                link = "";
-                            }
-                        }
-                        if (link) {
-                            libs.log({ link: link, title: title }, PROVIDER, "SUBS LINK ====>");
-                            var linkData = link.split("/");
-                            if (linkData.length > 2) {
-                                var langData = linkData[2].split("-");
-                                var lang_1 = langData[0];
-                                var validLang = validLangs_1.find(function (item) { return item.code == lang_1; });
-                                if (validLang) {
-                                    link = "https://www.podnapisi.net".concat(link, "/download");
-                                    callback({
-                                        file: link,
-                                        kind: "Captions",
-                                        label: validLang.name,
-                                        type: "zip",
-                                        provider: PROVIDER,
-                                    });
-                                    libs.log({
-                                        file: link,
-                                        kind: "Captions",
-                                        label: validLang.name,
-                                        type: "download",
-                                        provider: PROVIDER,
-                                    }, PROVIDER, "SUBS CALLBACK ====>");
-                                }
-                            }
-                        }
-                    });
-                    return [3, 5];
-                case 4:
-                    e_1 = _b.sent();
-                    libs.log({ e: e_1 }, PROVIDER, "ERROR");
-                    return [3, 5];
-                case 5: return [2, true];
-            }
-        });
+                });
+                return [3, 5];
+            case 4:
+                e_1 = _b.sent();
+                libs.log({ e: e_1 }, PROVIDER, "ERROR");
+                return [3, 5];
+            case 5: return [2, true];
+        }
     });
-};
+}); };

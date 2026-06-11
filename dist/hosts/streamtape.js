@@ -26,7 +26,8 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                     if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
                     if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
                     if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                    if (t[2]) _.ops.pop(); _.trys.pop(); continue;
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
             }
             op = body.call(thisArg, _);
         } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
@@ -51,7 +52,7 @@ hosts["streamtape"] = function (url, movieInfo, provider, config, callback) { re
                 return [4, libs.request_get(url, headers, false)];
             case 2:
                 htmlDetail = _a.sent();
-                parseHtmlDetail = htmlDetail.match(/document\.getElementById\('norobotlink'\)\.innerHTML \= '([^']+)' *\+ *\('([^']+)/i);
+                parseHtmlDetail = htmlDetail.match(/document\.getElementById\(\'norobotlink\'\)\.innerHTML \= \'([^\']+)\' *\+ *\(\'([^\']+)/i);
                 if (!parseHtmlDetail) {
                     return [2];
                 }
@@ -70,4 +71,27 @@ hosts["streamtape"] = function (url, movieInfo, provider, config, callback) { re
                         redirect: 'manual',
                         method: 'HEAD',
                         headers: {
-                            "user-agent": "Mozilla/5.0 (Windows NT 6.1;
+                            "user-agent": "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/51.0.2704.79 Safari/537.36",
+                            "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7"
+                        }
+                    })];
+            case 4:
+                dataEmbed = _a.sent();
+                libs.log({ redirect_url: dataEmbed.url }, provider, "DATA EMBED URL");
+                if (dataEmbed.url && dataEmbed.url.indexOf("tapecontent") != -1) {
+                    libs.embed_redirect(dataEmbed.url, 'hls', movieInfo, provider, callback, undefined, []);
+                }
+                return [3, 6];
+            case 5:
+                e_1 = _a.sent();
+                libs.log({ error: e_1 }, provider, "REDIRECT URL");
+                return [3, 6];
+            case 6: return [3, 8];
+            case 7:
+                e_2 = _a.sent();
+                libs.log({ e: e_2 }, HOST, "ERROR");
+                return [3, 8];
+            case 8: return [2];
+        }
+    });
+}); };

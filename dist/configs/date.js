@@ -6,7 +6,6 @@ libs.date_getCurrentDate = function () {
     today = mm + '/' + dd + '/' + yyyy;
     return today.toString();
 };
-
 libs.date_getCurrentHour = function () {
     var today = new Date();
     return String(today.getHours());

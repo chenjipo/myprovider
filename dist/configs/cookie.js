@@ -7,7 +7,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-
 var __generator = (this && this.__generator) || function (thisArg, body) {
     var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
     return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
@@ -27,28 +26,25 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                     if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
                     if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
                     if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                    if (t[2]) _.ops.pop(); _.trys.pop(); continue;
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
             }
             op = body.call(thisArg, _);
         } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-
 var _this = this;
-
 libs.cookies_clearAll = function () {
     return new Promise(function (rel, reject) {
         try {
-            cookieManagerS.clearAll().then(function (success) {
-                return __awaiter(_this, void 0, void 0, function () {
-                    return __generator(this, function (_a) {
-                        console.log('clear_cookie', success);
-                        rel(success);
-                        return [2];
-                    });
+            cookieManagerS.clearAll().then(function (success) { return __awaiter(_this, void 0, void 0, function () {
+                return __generator(this, function (_a) {
+                    console.log('clear_cookie', success);
+                    rel(success);
+                    return [2];
                 });
-            });
+            }); });
         }
         catch (e) {
             console.log({ e: e }, 'cookie_clearAll');
@@ -56,7 +52,6 @@ libs.cookies_clearAll = function () {
         }
     });
 };
-
 libs.cookies_get = function (url) {
     return new Promise(function (rel, reject) {
         try {

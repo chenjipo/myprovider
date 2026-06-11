@@ -7,7 +7,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-
 var __generator = (this && this.__generator) || function (thisArg, body) {
     var _ = { label: 0, sent: function() { if (t[0] & 1) throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g;
     return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() { return this; }), g;
@@ -27,66 +26,63 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
                     if (op[0] === 3 && (!t || (op[1] > t[0] && op[1] < t[3]))) { _.label = op[1]; break; }
                     if (op[0] === 6 && _.label < t[1]) { _.label = t[1]; t = op; break; }
                     if (t && _.label < t[2]) { _.label = t[2]; _.ops.push(op); break; }
-                    if (t[2]) _.ops.pop(); _.trys.pop(); continue;
+                    if (t[2]) _.ops.pop();
+                    _.trys.pop(); continue;
             }
             op = body.call(thisArg, _);
         } catch (e) { op = [6, e]; y = 0; } finally { f = t = 0; }
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
-
 var _this = this;
-
-callbacksEmbed["lookmovie"] = function (dataCallback, provider, host, callback, metadata) {
-    return __awaiter(_this, void 0, void 0, function () {
-        var parseCallback, parseDirect, rank, sortDirect, tracks, _i, _a, item, directIndex, sizeQuality;
-        return __generator(this, function (_b) {
-            parseCallback = JSON.parse(dataCallback);
-            if (!parseCallback || !parseCallback.responseURL) {
+callbacksEmbed["lookmovie"] = function (dataCallback, provider, host, callback, metadata) { return __awaiter(_this, void 0, void 0, function () {
+    var parseCallback, parseDirect, rank, sortDirect, tracks, _i, _a, item, directIndex, sizeQuality;
+    return __generator(this, function (_b) {
+        parseCallback = JSON.parse(dataCallback);
+        if (!parseCallback || !parseCallback.responseURL) {
+            return [2];
+        }
+        if ((parseCallback.responseURL.indexOf('security/episode-access') != -1 || parseCallback.responseURL.indexOf('security/movie-access') != -1) && parseCallback.responseText) {
+            libs.log(parseCallback, provider, 'IFRAME CALLBACK');
+            parseDirect = JSON.parse(parseCallback.responseText);
+            if (!parseDirect['streams']) {
                 return [2];
             }
-            if ((parseCallback.responseURL.indexOf('security/episode-access') != -1 || parseCallback.responseURL.indexOf('security/movie-access') != -1) && parseCallback.responseText) {
-                libs.log(parseCallback, provider, 'IFRAME CALLBACK');
-                parseDirect = JSON.parse(parseCallback.responseText);
-                if (!parseDirect['streams']) {
-                    return [2];
-                }
-                rank = 0;
-                sortDirect = [];
-                tracks = [];
-                if (parseDirect['subtitles']) {
-                    for (_i = 0, _a = parseDirect['subtitles']; _i < _a.length; _i++) {
-                        item = _a[_i];
-                        if (!item.file) {
-                            continue;
-                        }
-                        tracks.push({ file: "".concat(metadata.DOMAIN).concat(item.file),
-                            label: item.language,
-                            kind: item.kind });
-                    }
-                }
-                for (directIndex in parseDirect['streams']) {
-                    if (directIndex == 'auto') {
+            rank = 0;
+            sortDirect = [];
+            tracks = [];
+            if (parseDirect['subtitles']) {
+                for (_i = 0, _a = parseDirect['subtitles']; _i < _a.length; _i++) {
+                    item = _a[_i];
+                    if (!item.file) {
                         continue;
                     }
-                    if (!parseDirect['streams'][directIndex]) {
-                        continue;
-                    }
-                    sizeQuality = directIndex.match(/([0-9]+)/i);
-                    sizeQuality = sizeQuality ? Number(sizeQuality[1]) : 'HD';
-                    sortDirect.push({
-                        quality: sizeQuality,
-                        file: parseDirect['streams'][directIndex],
-                    });
+                    tracks.push({ file: "".concat(metadata.DOMAIN).concat(item.file),
+                        label: item.language,
+                        kind: item.kind });
                 }
-                sortDirect = _.orderBy(sortDirect, ['quality'], ['desc']);
-                libs.log({ sortDirect: sortDirect, tracks: tracks }, provider, 'TRACKS');
-                if (sortDirect.length == 0) {
-                    return [2];
-                }
-                libs.embed_callback(sortDirect[0].file, provider, host, 'Hls', callback, ++rank, tracks, sortDirect);
             }
-            return [2];
-        });
+            for (directIndex in parseDirect['streams']) {
+                if (directIndex == 'auto') {
+                    continue;
+                }
+                if (!parseDirect['streams'][directIndex]) {
+                    continue;
+                }
+                sizeQuality = directIndex.match(/([0-9]+)/i);
+                sizeQuality = sizeQuality ? Number(sizeQuality[1]) : 'HD';
+                sortDirect.push({
+                    quality: sizeQuality,
+                    file: parseDirect['streams'][directIndex],
+                });
+            }
+            sortDirect = _.orderBy(sortDirect, ['quality'], ['desc']);
+            libs.log({ sortDirect: sortDirect, tracks: tracks }, provider, 'TRACKS');
+            if (sortDirect.length == 0) {
+                return [2];
+            }
+            libs.embed_callback(sortDirect[0].file, provider, host, 'Hls', callback, ++rank, tracks, sortDirect);
+        }
+        return [2];
     });
-};
+}); };
