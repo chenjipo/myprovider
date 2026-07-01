@@ -1,0 +1,13 @@
+{
+  "configs": [
+    "dist/configs/log.js",
+    "dist/configs/url.js",
+    "dist/configs/db.js",
+    "dist/configs/embed.js",
+    "dist/configs/request.js",
+    "dist/configs/string.js",
+    "dist/configs/tmdb.js",
+    "dist/configs/date.js",
+    "dist/configs/cookie.js"
+  ]
+}

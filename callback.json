@@ -1,0 +1,19 @@
+{
+  "callbacks": [
+    "dist/callbacks/vidcloud.js",
+    "dist/callbacks/lookmovie.js",
+    "dist/callbacks/m4ufree.js",
+    "dist/callbacks/mcloud.js",
+    "dist/callbacks/rabbitstream.js",
+    "dist/callbacks/vidstream.js",
+    "dist/callbacks/playm4u.js",
+    "dist/callbacks/wsoap2day.js",
+    "dist/callbacks/vidplay.js",
+    "dist/callbacks/smashystream.js",
+    "dist/callbacks/ployan.js",
+    "dist/callbacks/yesmovies-embed.js",
+    "dist/callbacks/vidlink-embed.js",
+    "dist/callbacks/uniquestream-embed.js",
+    "dist/callbacks/closeload-embed.js"
+  ]
+}
