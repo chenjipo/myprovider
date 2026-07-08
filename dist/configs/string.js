@@ -60,9 +60,17 @@ libs.string_provider = function (provider, rank) {
         'ployan': 'YesMovies',
         'JustHD': 'JustHD',
         'DUniqueStream': 'DUniqueStream',
+        'YMovies': 'Y',
+        'LRIDOMOVIE': 'L',
+        'XVidsrcVip': 'X',
+        'AVideasy': 'A',
+        'V': 'A',
     };
     if (labels[provider]) {
-        return 'Server ' + labels[provider];
+        if (!rank) {
+            return 'Server ' + labels[provider];
+        }
+        return 'Server ' + labels[provider] + rank;
     }
     var normalized = String(provider || '').trim();
     if (normalized.toLowerCase() === 'iyesmovies' || normalized === 'ployan') {
@@ -73,7 +81,7 @@ libs.string_provider = function (provider, rank) {
     }
     return "Server ".concat(provider[0].toUpperCase()).concat(rank);
 };
-console.log('[RN-Fetch][STRING-CFG] v3');
+console.log('[RN-Fetch][STRING-CFG] v9-server-a-slot');
 libs.string_encrypt_fmovies = function (input) {
     var keytwo = "51wJ0FDq/UVCefLopEcmK3ni4WIQztMjZdSYOsbHr9R2h7PvxBGAuglaN8+kXT6y";
     var output = '';
