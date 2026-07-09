@@ -146,7 +146,6 @@ if (!libs.__embedCallbackDeliver) {
         var linkSource = String(provider || '');
         var linkHost = String(host || provider || '');
         if (linkRank > 0) {
-            linkSource = linkSource + '-' + linkRank;
             linkHost = linkHost + '-' + linkRank;
         }
         callback(__assign({ file: urlDirect, quality: quality, host: linkHost, source: linkSource, provider: displayProvider, rank: linkRank, subs: parseSubs, direct_quality: direct_quality, headers: headers }, options));
@@ -318,8 +317,12 @@ libs.__isVodYaxSyncProvider = function (provider) {
     var p = String(provider || '');
     return p === 'YMovies' || p === 'AVideasy' || p === 'XVidsrcVip';
 };
+libs.__isVodYaxBatchProvider = function (provider) {
+    var p = String(provider || '');
+    return p === 'YMovies' || p === 'AVideasy' || p === 'XVidsrcVip';
+};
 libs.__isVodBatchProvider = function (provider) {
-    if (libs.__vodSyncYaxEnabled && libs.__isVodYaxSyncProvider(provider)) {
+    if (libs.__vodSyncYaxEnabled && libs.__isVodYaxBatchProvider(provider)) {
         return true;
     }
     return provider === 'MUniqueStream' || provider === 'MVidlink' || provider === 'IYesMovies';
@@ -328,7 +331,7 @@ libs.__isVodBatchStream = function (urlDirect, provider) {
     if (!urlDirect) {
         return false;
     }
-    if (libs.__vodSyncYaxEnabled && libs.__isVodYaxSyncProvider(provider)) {
+    if (libs.__vodSyncYaxEnabled && libs.__isVodYaxBatchProvider(provider)) {
         return true;
     }
     var url = String(urlDirect);
@@ -364,12 +367,13 @@ libs.__batchHasProvider = function (provider) {
     }
     return false;
 };
-libs.__embedSyncVersion = 'v15-restore-multi-link';
+libs.__embedSyncVersion = 'v20-source-slot';
 libs.__vodSyncYaxEnabled = true;
 // Rollback: set __vodSyncYaxEnabled=false to restore direct deliver (pre-v13 / direct-v25).
 libs.__vodSyncYaxProviders = ['YMovies', 'AVideasy', 'XVidsrcVip'];
 libs.__vodSyncFlushMs = 3500;
-libs.__vodSyncMaxMs = 12000;
+libs.__vodSyncMaxMs = 18000;
+libs.__vodSyncHardMaxMs = 26000;
 libs.__vodSyncWvMaxMs = 45000;
 libs.__vodSyncSingleMs = 16000;
 libs.__vodSyncCoalesceMs = 4500;
@@ -488,12 +492,17 @@ libs.__tryPushVodSyncLink = function (urlDirect, provider, host, quality, callba
     if (!libs.__shouldSyncVodLinks() || !libs.__isVodBatchProvider(provider) || !libs.__isVodBatchStream(urlDirect, provider)) {
         return false;
     }
+    var bag = libs.__getVodSyncBag();
+    if (bag.flushed) {
+        console.log('[RN-Fetch][SYNC-LATE-ADD] provider=' + provider + ' direct=1');
+        return false;
+    }
     var syncItemKey = libs.__vodSyncItemKey(provider, rank, urlDirect);
     if (libs.__vodSyncHasItemKey(syncItemKey)) {
         console.log('[RN-Fetch][SYNC-SKIP-DUP] key=' + syncItemKey);
         return true;
     }
-    if (!libs.__isVodYaxSyncProvider(provider) && libs.__vodSyncHasProvider(provider)) {
+    if (!libs.__isVodYaxBatchProvider(provider) && libs.__vodSyncHasProvider(provider)) {
         console.log('[RN-Fetch][SYNC-SKIP-DUP] provider=' + provider);
         return true;
     }
@@ -621,8 +630,10 @@ libs.__scheduleSyncFlush = function () {
     libs.__vodSyncFlushed = bag.flushed;
     if (libs.__vodSyncYaxEnabled) {
         if (items.length >= 1 && elapsed >= libs.__vodSyncMaxMs) {
-            console.log('[RN-Fetch][SYNC-READY] elapsed=' + elapsed + 'ms queued=' + items.length + ' families=' + familyCount + ' reason=yax-max');
-            libs.__flushVodSyncItems();
+            if (familyCount >= libs.__vodSyncYaxMinFamilies || elapsed >= (libs.__vodSyncHardMaxMs || 26000)) {
+                console.log('[RN-Fetch][SYNC-READY] elapsed=' + elapsed + 'ms queued=' + items.length + ' families=' + familyCount + ' reason=yax-max');
+                libs.__flushVodSyncItems();
+            }
             return;
         }
         if (elapsed >= libs.__vodSyncMaxMs) {
@@ -647,8 +658,10 @@ libs.__scheduleSyncFlush = function () {
                     return;
                 }
                 if (liveElapsed >= libs.__vodSyncMaxMs) {
-                    console.log('[RN-Fetch][SYNC-READY] elapsed=' + liveElapsed + 'ms queued=' + liveItems.length + ' families=' + liveFamilies + ' reason=yax-coalesce-max');
-                    libs.__flushVodSyncItems();
+                    if (liveFamilies >= libs.__vodSyncYaxMinFamilies || liveElapsed >= (libs.__vodSyncHardMaxMs || 26000)) {
+                        console.log('[RN-Fetch][SYNC-READY] elapsed=' + liveElapsed + 'ms queued=' + liveItems.length + ' families=' + liveFamilies + ' reason=yax-coalesce-max');
+                        libs.__flushVodSyncItems();
+                    }
                 }
             }, libs.__vodSyncCoalesceMs);
         }
@@ -852,6 +865,9 @@ libs.embed_callback = function (urlDirect, provider, host, quality, callback, ra
         if (libs.__shouldSyncVodLinks()) {
             if (libs.__tryPushVodSyncLink(urlDirect, provider, host, quality, callback, rank, subs, direct_quality, headers, options)) {
                 return;
+            }
+            if (libs.__getVodSyncBag().flushed) {
+                console.log('[RN-Fetch][SYNC-LATE-DIRECT] provider=' + provider + ' rank=' + rank);
             }
         }
         else if (libs.__getVodSyncBag().flushed) {

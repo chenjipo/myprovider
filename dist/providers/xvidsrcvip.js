@@ -1037,18 +1037,330 @@ function xvidsrcvipBuildEncWithRetry(movieInfo) {
     catch (warmErr) {
         console.log('[RN-Fetch][XVIP-AES-WARM] ' + String(warmErr && warmErr.message ? warmErr.message : warmErr));
     }
+    try {
+        var gcmBundle = xvidsrcvipEnsureGcmBundle();
+        console.log('[RN-Fetch][XVIP-GCM] warm-ok pure=' + (gcmBundle && gcmBundle.decryptVidrockToken ? 'yes' : 'no'));
+    }
+    catch (gcmWarmErr) {
+        console.log('[RN-Fetch][XVIP-GCM-WARM] ' + String(gcmWarmErr && gcmWarmErr.message ? gcmWarmErr.message : gcmWarmErr));
+    }
 })();
 function xvidsrcvipGetState() {
     var root = typeof globalThis !== 'undefined' ? globalThis : (typeof global !== 'undefined' ? global : {});
     if (!root.__xvipState) {
-        root.__xvipState = { delivered: {} };
+        root.__xvipState = { delivered: {}, activeRunKey: '', apiInflight: {}, apiCache: {} };
     }
     return root.__xvipState;
 }
-(function xvidsrcvipResetDeliveredOnReload() {
+function xvidsrcvipBuildApiUrl(movieInfo, domain) {
+    var base = domain || 'https://vidrock.ru';
+    if (!movieInfo || !movieInfo.tmdb_id) {
+        return '';
+    }
+    if (movieInfo.type === 'tv') {
+        var season = movieInfo.season || 1;
+        var episode = movieInfo.episode || 1;
+        return base + '/api/tv/' + String(movieInfo.tmdb_id) + '/' + String(season) + '/' + String(episode);
+    }
+    return base + '/api/movie/' + String(movieInfo.tmdb_id);
+}
+function xvidsrcvipFetchApi(urlovo, headers) {
+    var attemptFetch = function (left) {
+        if (left <= 0) {
+            console.log('[RN-Fetch][XVIP-SKIP] api-failed');
+            return Promise.resolve(null);
+        }
+        var current = 4 - left;
+        return fetch(urlovo, { headers: headers, method: 'GET' }).then(function (response) {
+            if (!response.ok) {
+                return response.text().then(function (body) {
+                    console.log('[RN-Fetch][XVIP-API-ERR] status=' + response.status + ' attempt=' + current + ' body=' + String(body || '').substring(0, 120));
+                    return xvidsrcvipSleep(500 * current).then(function () {
+                        return attemptFetch(left - 1);
+                    });
+                });
+            }
+            return response.json();
+        }).catch(function (err) {
+            console.log('[RN-Fetch][XVIP-API-ERR] attempt=' + current + ' ' + String(err && err.message ? err.message : err));
+            return xvidsrcvipSleep(500 * current).then(function () {
+                return attemptFetch(left - 1);
+            });
+        });
+    };
+    return attemptFetch(3);
+}
+var XVIP_URL_KEY_HEX = '7f3e9c2a8b5d1f4e6a9c3b7d2e5f8a1c4b6d9e2f5a8c1b4d7e9f2a5c8b1d4e7f';
+function xvidsrcvipHexToBytes(hex) {
+    var out = new Uint8Array(hex.length / 2);
+    for (var i = 0; i < out.length; i++) {
+        out[i] = parseInt(hex.substr(i * 2, 2), 16);
+    }
+    return out;
+}
+function xvidsrcvipBase64UrlToBytes(value) {
+    var normalized = String(value || '').replace(/-/g, '+').replace(/_/g, '/');
+    var mod = normalized.length % 4;
+    if (mod === 2) {
+        normalized += '==';
+    }
+    else if (mod === 3) {
+        normalized += '=';
+    }
+    else if (mod === 1) {
+        throw new Error('invalid base64url length');
+    }
+    if (typeof atob === 'undefined') {
+        throw new Error('atob unavailable');
+    }
+    var binary = atob(normalized);
+    var bytes = new Uint8Array(binary.length);
+    for (var i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+    }
+    return bytes;
+}
+function xvidsrcvipBytesToUtf8(bytes) {
+    var out = '';
+    var i = 0;
+    var len = bytes.length;
+    while (i < len) {
+        var c0 = bytes[i++];
+        if (c0 < 128) {
+            out += String.fromCharCode(c0);
+            continue;
+        }
+        if (c0 > 191 && c0 < 224) {
+            out += String.fromCharCode((c0 & 31) << 6 | bytes[i++] & 63);
+            continue;
+        }
+        out += String.fromCharCode((c0 & 15) << 12 | (bytes[i++] & 63) << 6 | bytes[i++] & 63);
+    }
+    return out;
+}
+function xvidsrcvipEnsureGcmBundle() {
+    if (libs.__xvipGcmPure && libs.__xvipGcmPure.decryptVidrockToken) {
+        return libs.__xvipGcmPure;
+    }
+    if (typeof atob === 'undefined') {
+        var rootAtob = typeof globalThis !== 'undefined' ? globalThis : (typeof global !== 'undefined' ? global : {});
+        rootAtob.atob = function (input) {
+            var chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=';
+            var str = String(input || '').replace(/=+$/, '');
+            var output = '';
+            if (str.length % 4 === 1) {
+                throw new Error('invalid base64');
+            }
+            for (var bc = 0, bs = 0, buffer, i = 0; (buffer = str.charAt(i++)); ~buffer && (bs = bc % 4 ? bs * 64 + buffer : buffer, bc++ % 4) ? output += String.fromCharCode(255 & bs >> (-2 * bc & 6)) : 0) {
+                buffer = chars.indexOf(buffer);
+            }
+            return output;
+        };
+    }
+    if (typeof Uint8Array.from !== 'function') {
+        Uint8Array.from = function (arr) {
+            var out = new Uint8Array(arr.length);
+            for (var i = 0; i < arr.length; i++) {
+                out[i] = arr[i];
+            }
+            return out;
+        };
+    }
+    DataView.prototype.setBigUint64 = function (byteOffset, value, littleEndian) {
+            var num = Number(value);
+            var lo = num >>> 0;
+            var hi = (Math.floor(num / 4294967296)) >>> 0;
+            if (littleEndian) {
+                this.setUint32(byteOffset, lo, true);
+                this.setUint32(byteOffset + 4, hi, true);
+            }
+            else {
+                this.setUint32(byteOffset, hi, false);
+                this.setUint32(byteOffset + 4, lo, false);
+            }
+        };
+    var __xvipGcmBundle=(()=>{var V=Object.defineProperty;var it=Object.getOwnPropertyDescriptor;var ft=Object.getOwnPropertyNames;var lt=Object.prototype.hasOwnProperty;var ut=(t,n)=>{for(var e in n)V(t,e,{get:n[e],enumerable:!0})},ht=(t,n,e,o)=>{if(n&&typeof n=="object"||typeof n=="function")for(let r of ft(n))!lt.call(t,r)&&r!==e&&V(t,r,{get:()=>n[r],enumerable:!(o=it(n,r))||o.enumerable});return t};var at=t=>ht(V({},"__esModule",{value:!0}),t);var It={};ut(It,{decryptVidrockToken:()=>Ct});function j(t){return t instanceof Uint8Array||ArrayBuffer.isView(t)&&t.constructor.name==="Uint8Array"}function d(t,...n){if(!j(t))throw new Error("Uint8Array expected");if(n.length>0&&!n.includes(t.length))throw new Error("Uint8Array expected of length "+n+", got length="+t.length)}function I(t,n=!0){if(t.destroyed)throw new Error("Hash instance has been destroyed");if(n&&t.finished)throw new Error("Hash#digest() has already been called")}function H(t,n){d(t);let e=n.outputLen;if(t.length<e)throw new Error("digestInto() expects output buffer of length at least "+e)}var $=t=>new Uint8Array(t.buffer,t.byteOffset,t.byteLength),B=t=>new Uint32Array(t.buffer,t.byteOffset,Math.floor(t.byteLength/4)),v=t=>new DataView(t.buffer,t.byteOffset,t.byteLength),gt=new Uint8Array(new Uint32Array([287454020]).buffer)[0]===68;if(!gt)throw new Error("Non little-endian hardware is not supported");function pt(t){if(typeof t!="string")throw new Error("string expected");return new Uint8Array(new TextEncoder().encode(t))}function S(t){if(typeof t=="string")t=pt(t);else if(j(t))t=T(t);else throw new Error("Uint8Array expected, got "+typeof t);return t}function G(t,n){if(t.length!==n.length)return!1;let e=0;for(let o=0;o<t.length;o++)e|=t[o]^n[o];return e===0}var J=(t,n)=>{function e(o,...r){if(d(o),t.nonceLength!==void 0){let u=r[0];if(!u)throw new Error("nonce / iv required");t.varSizeNonce?d(u):d(u,t.nonceLength)}let s=t.tagLength;s&&r[1]!==void 0&&d(r[1]);let i=n(o,...r),f=(u,h)=>{if(h!==void 0){if(u!==2)throw new Error("cipher output not supported");d(h)}},c=!1;return{encrypt(u,h){if(c)throw new Error("cannot encrypt() twice with same key + nonce");return c=!0,d(u),f(i.encrypt.length,h),i.encrypt(u,h)},decrypt(u,h){if(d(u),s&&u.length<s)throw new Error("invalid ciphertext length: smaller than tagLength="+s);return f(i.decrypt.length,h),i.decrypt(u,h)}}}return Object.assign(e,t),e};function Q(t,n,e=!0){if(n===void 0)return new Uint8Array(t);if(n.length!==t)throw new Error("invalid output length, expected "+t+", got: "+n.length);if(e&&!K(n))throw new Error("invalid output, must be aligned");return n}function z(t,n,e,o){let v=Number(e),lo=v>>>0,hi=(Math.floor(v/4294967296))>>>0;o?(t.setUint32(n,lo,!0),t.setUint32(n+4,hi,!0)):(t.setUint32(n,hi,!1),t.setUint32(n+4,lo,!1))}function K(t){return t.byteOffset%4===0}function T(t){return Uint8Array.from(t)}function U(...t){for(let n=0;n<t.length;n++)t[n].fill(0)}var L=16,q=new Uint8Array(16),A=B(q),yt=225,wt=(t,n,e,o)=>{let r=o&1;return{s3:e<<31|o>>>1,s2:n<<31|e>>>1,s1:t<<31|n>>>1,s0:t>>>1^yt<<24&-(r&1)}},x=t=>(t>>>0&255)<<24|(t>>>8&255)<<16|(t>>>16&255)<<8|t>>>24&255|0;function dt(t){t.reverse();let n=t[15]&1,e=0;for(let o=0;o<t.length;o++){let r=t[o];t[o]=r>>>1|e,e=(r&1)<<7}return t[0]^=-n&225,t}var bt=t=>t>64*1024?8:t>1024?4:2,k=class{constructor(n,e){this.blockLen=L,this.outputLen=L,this.s0=0,this.s1=0,this.s2=0,this.s3=0,this.finished=!1,n=S(n),d(n,16);let o=v(n),r=o.getUint32(0,!1),s=o.getUint32(4,!1),i=o.getUint32(8,!1),f=o.getUint32(12,!1),c=[];for(let p=0;p<128;p++)c.push({s0:x(r),s1:x(s),s2:x(i),s3:x(f)}),{s0:r,s1:s,s2:i,s3:f}=wt(r,s,i,f);let l=bt(e||1024);if(![1,2,4,8].includes(l))throw new Error("ghash: invalid window size, expected 2, 4 or 8");this.W=l;let h=128/l,a=this.windowSize=2**l,g=[];for(let p=0;p<h;p++)for(let w=0;w<a;w++){let b=0,m=0,y=0,_=0;for(let E=0;E<l;E++){if(!(w>>>l-E-1&1))continue;let{s0:W,s1:rt,s2:st,s3:ct}=c[l*p+E];b^=W,m^=rt,y^=st,_^=ct}g.push({s0:b,s1:m,s2:y,s3:_})}this.t=g}_updateBlock(n,e,o,r){n^=this.s0,e^=this.s1,o^=this.s2,r^=this.s3;let{W:s,t:i,windowSize:f}=this,c=0,l=0,u=0,h=0,a=(1<<s)-1,g=0;for(let p of[n,e,o,r])for(let w=0;w<4;w++){let b=p>>>8*w&255;for(let m=8/s-1;m>=0;m--){let y=b>>>s*m&a,{s0:_,s1:E,s2:C,s3:W}=i[g*f+y];c^=_,l^=E,u^=C,h^=W,g+=1}}this.s0=c,this.s1=l,this.s2=u,this.s3=h}update(n){n=S(n),I(this);let e=B(n),o=Math.floor(n.length/L),r=n.length%L;for(let s=0;s<o;s++)this._updateBlock(e[s*4+0],e[s*4+1],e[s*4+2],e[s*4+3]);return r&&(q.set(n.subarray(o*L)),this._updateBlock(A[0],A[1],A[2],A[3]),U(A)),this}destroy(){let{t:n}=this;for(let e of n)e.s0=0,e.s1=0,e.s2=0,e.s3=0}digestInto(n){I(this),H(n,this),this.finished=!0;let{s0:e,s1:o,s2:r,s3:s}=this,i=B(n);return i[0]=e,i[1]=o,i[2]=r,i[3]=s,n}digest(){let n=new Uint8Array(L);return this.digestInto(n),this.destroy(),n}},Z=class extends k{constructor(n,e){n=S(n);let o=dt(T(n));super(o,e),U(o)}update(n){n=S(n),I(this);let e=B(n),o=n.length%L,r=Math.floor(n.length/L);for(let s=0;s<r;s++)this._updateBlock(x(e[s*4+3]),x(e[s*4+2]),x(e[s*4+1]),x(e[s*4+0]));return o&&(q.set(n.subarray(r*L)),this._updateBlock(x(A[3]),x(A[2]),x(A[1]),x(A[0])),U(A)),this}digestInto(n){I(this),H(n,this),this.finished=!0;let{s0:e,s1:o,s2:r,s3:s}=this,i=B(n);return i[0]=e,i[1]=o,i[2]=r,i[3]=s,n.reverse()}};function X(t){let n=(o,r)=>t(r,o.length).update(S(o)).digest(),e=t(new Uint8Array(16),0);return n.outputLen=e.outputLen,n.blockLen=e.blockLen,n.create=(o,r)=>t(o,r),n}var R=X((t,n)=>new k(t,n)),xt=X((t,n)=>new Z(t,n));var F=16,mt=4,N=new Uint8Array(F),Et=283;function D(t){return t<<1^Et&-(t>>7)}function tt(t,n){let e=0;for(;n>0;n>>=1)e^=t&-(n&1),t=D(t);return e}var Bt=(()=>{let t=new Uint8Array(256);for(let e=0,o=1;e<256;e++,o^=D(o))t[e]=o;let n=new Uint8Array(256);n[0]=99;for(let e=0;e<255;e++){let o=t[255-e];o|=o<<8,n[t[e]]=(o^o>>4^o>>5^o>>6^o>>7^99)&255}return U(t),n})();var Ut=t=>t<<24|t>>>8,Y=t=>t<<8|t>>>24;function At(t,n){if(t.length!==256)throw new Error("Wrong sbox length");let e=new Uint32Array(256).map((l,u)=>n(t[u])),o=e.map(Y),r=o.map(Y),s=r.map(Y),i=new Uint32Array(256*256),f=new Uint32Array(256*256),c=new Uint16Array(256*256);for(let l=0;l<256;l++)for(let u=0;u<256;u++){let h=l*256+u;i[h]=e[l]^o[u],f[h]=r[l]^s[u],c[h]=t[l]<<8|t[u]}return{sbox:t,sbox2:c,T0:e,T1:o,T2:r,T3:s,T01:i,T23:f}}var et=At(Bt,t=>tt(t,3)<<24|t<<16|t<<8|tt(t,2));var Lt=(()=>{let t=new Uint8Array(16);for(let n=0,e=1;n<16;n++,e=D(e))t[n]=e;return t})();function Tt(t){d(t);let n=t.length;if(![16,24,32].includes(n))throw new Error("aes: invalid key size, should be 16, 24 or 32, got "+n);let{sbox2:e}=et,o=[];K(t)||o.push(t=T(t));let r=B(t),s=r.length,i=c=>O(e,c,c,c,c),f=new Uint32Array(n+28);f.set(r);for(let c=s;c<f.length;c++){let l=f[c-1];c%s===0?l=i(Ut(l))^Lt[c/s-1]:s>6&&c%s===4&&(l=i(l)),f[c]=f[c-s]^l}return U(...o),f}function M(t,n,e,o,r,s){return t[e<<8&65280|o>>>8&255]^n[r>>>8&65280|s>>>24&255]}function O(t,n,e,o,r){return t[n&255|e&65280]|t[o>>>16&255|r>>>16&65280]<<16}function nt(t,n,e,o,r){let{sbox2:s,T01:i,T23:f}=et,c=0;n^=t[c++],e^=t[c++],o^=t[c++],r^=t[c++];let l=t.length/4-2;for(let p=0;p<l;p++){let w=t[c++]^M(i,f,n,e,o,r),b=t[c++]^M(i,f,e,o,r,n),m=t[c++]^M(i,f,o,r,n,e),y=t[c++]^M(i,f,r,n,e,o);n=w,e=b,o=m,r=y}let u=t[c++]^O(s,n,e,o,r),h=t[c++]^O(s,e,o,r,n),a=t[c++]^O(s,o,r,n,e),g=t[c++]^O(s,r,n,e,o);return{s0:u,s1:h,s2:a,s3:g}}function P(t,n,e,o,r){d(e,F),d(o),r=Q(o.length,r);let s=e,i=B(s),f=v(s),c=B(o),l=B(r),u=n?0:12,h=o.length,a=f.getUint32(u,n),{s0:g,s1:p,s2:w,s3:b}=nt(t,i[0],i[1],i[2],i[3]);for(let y=0;y+4<=c.length;y+=4)l[y+0]=c[y+0]^g,l[y+1]=c[y+1]^p,l[y+2]=c[y+2]^w,l[y+3]=c[y+3]^b,a=a+1>>>0,f.setUint32(u,a,n),{s0:g,s1:p,s2:w,s3:b}=nt(t,i[0],i[1],i[2],i[3]);let m=F*Math.floor(c.length/mt);if(m<h){let y=new Uint32Array([g,p,w,b]),_=$(y);for(let E=m,C=0;E<h;E++,C++)r[E]=o[E]^_[C];U(y)}return r}function _t(t,n,e,o,r){let s=r==null?0:r.length,i=t.create(e,o.length+s);r&&i.update(r),i.update(o);let f=new Uint8Array(16),c=v(f);r&&z(c,0,Number(s*8),n),z(c,8,Number(o.length*8),n),i.update(f);let l=i.digest();return U(f),l}var ot=J({blockSize:16,nonceLength:12,tagLength:16,varSizeNonce:!0},function(n,e,o){if(e.length<8)throw new Error("aes/gcm: invalid nonce length");let r=16;function s(f,c,l){let u=_t(R,!1,f,l,o);for(let h=0;h<c.length;h++)u[h]^=c[h];return u}function i(){let f=Tt(n),c=N.slice(),l=N.slice();if(P(f,!1,l,l,c),e.length===12)l.set(e);else{let h=N.slice(),a=v(h);z(a,8,Number(e.length*8),!1);let g=R.create(c).update(e).update(h);g.digestInto(l),g.destroy()}let u=P(f,!1,l,N);return{xk:f,authKey:c,counter:l,tagMask:u}}return{encrypt(f){let{xk:c,authKey:l,counter:u,tagMask:h}=i(),a=new Uint8Array(f.length+r),g=[c,l,u,h];K(f)||g.push(f=T(f)),P(c,!1,u,f,a.subarray(0,f.length));let p=s(l,h,a.subarray(0,a.length-r));return g.push(p),a.set(p,f.length),U(...g),a},decrypt(f){let{xk:c,authKey:l,counter:u,tagMask:h}=i(),a=[c,l,h,u];K(f)||a.push(f=T(f));let g=f.subarray(0,-r),p=f.subarray(-r),w=s(l,h,g);if(a.push(w),!G(w,p))throw new Error("aes/gcm: invalid ghash tag");let b=P(c,!1,u,g);return U(...a),b}}});function vt(t){let n=new Uint8Array(t.length/2);for(let e=0;e<n.length;e++)n[e]=parseInt(t.substr(e*2,2),16);return n}function St(t){let n=String(t||"").replace(/-/g,"+").replace(/_/g,"/"),e=n.length%4;if(e===2)n+="==";else if(e===3)n+="=";else if(e===1)throw new Error("invalid base64url length");let o=atob(n),r=new Uint8Array(o.length);for(let s=0;s<o.length;s++)r[s]=o.charCodeAt(s);return r}function Ct(t,n){let e=vt(n),o=St(t);if(o.length<28)throw new Error("ciphertext too short");let r=o.slice(0,12),s=o.slice(12),i=ot(e,r);return xvidsrcvipBytesToUtf8(i.decrypt(s))}return at(It);})();
+/*! Bundled license information:
+
+@noble/ciphers/esm/utils.js:
+  (*! noble-ciphers - MIT License (c) 2023 Paul Miller (paulmillr.com) *)
+*/
+    libs.__xvipGcmPure = typeof __xvipGcmBundle !== 'undefined' ? __xvipGcmBundle : null;
+    return libs.__xvipGcmPure;
+}
+function xvidsrcvipGetGcmKeyPromise() {
+    if (!libs.__xvipGcmKeyPromise) {
+        libs.__xvipGcmKeyPromise = (function () {
+            if (typeof crypto === 'undefined' || !crypto.subtle) {
+                return Promise.resolve(null);
+            }
+            var keyBytes = xvidsrcvipHexToBytes(XVIP_URL_KEY_HEX);
+            return crypto.subtle.importKey('raw', keyBytes, { name: 'AES-GCM' }, false, ['decrypt']);
+        })();
+    }
+    return libs.__xvipGcmKeyPromise;
+}
+function xvidsrcvipDecodeTokenPure(token) {
+    try {
+        var bundle = xvidsrcvipEnsureGcmBundle();
+        if (!bundle || !bundle.decryptVidrockToken) {
+            console.log('[RN-Fetch][XVIP-DECODE-PURE] bundle-missing');
+            return '';
+        }
+        return bundle.decryptVidrockToken(token, XVIP_URL_KEY_HEX);
+    }
+    catch (pureErr) {
+        console.log('[RN-Fetch][XVIP-DECODE-PURE-ERR] ' + String(pureErr && pureErr.message ? pureErr.message : pureErr));
+        return '';
+    }
+}
+function xvidsrcvipDecodeToken(token) {
+    return __awaiter(_this, void 0, void 0, function () {
+        var plain, key, allBytes, iv, cipher, ivBuf, cipherBuf, plainBuf, pureErr_1, decodeErr_1;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    _a.trys.push([0, 2, , 3]);
+                    plain = xvidsrcvipDecodeTokenPure(token);
+                    if (plain) {
+                        console.log('[RN-Fetch][XVIP-DECODE] mode=pure host=' + String(plain).split('/')[2]);
+                        return [2, plain];
+                    }
+                    return [3, 3];
+                case 1:
+                    pureErr_1 = _a.sent();
+                    console.log('[RN-Fetch][XVIP-DECODE-PURE-ERR] ' + String(pureErr_1 && pureErr_1.message ? pureErr_1.message : pureErr_1));
+                    return [3, 3];
+                case 2:
+                    return [3, 3];
+                case 3:
+                    _a.trys.push([3, 6, , 7]);
+                    return [4, xvidsrcvipGetGcmKeyPromise()];
+                case 4:
+                    key = _a.sent();
+                    if (!key) {
+                        return [2, ''];
+                    }
+                    allBytes = xvidsrcvipBase64UrlToBytes(token);
+                    if (allBytes.length < 28) {
+                        return [2, ''];
+                    }
+                    iv = allBytes.slice(0, 12);
+                    cipher = allBytes.slice(12);
+                    ivBuf = iv.buffer.slice(iv.byteOffset, iv.byteOffset + iv.byteLength);
+                    cipherBuf = cipher.buffer.slice(cipher.byteOffset, cipher.byteOffset + cipher.byteLength);
+                    return [4, crypto.subtle.decrypt({ name: 'AES-GCM', iv: ivBuf }, key, cipherBuf)];
+                case 5:
+                    plainBuf = _a.sent();
+                    plain = xvidsrcvipBytesToUtf8(new Uint8Array(plainBuf));
+                    console.log('[RN-Fetch][XVIP-DECODE] mode=subtle host=' + String(plain).split('/')[2]);
+                    return [2, plain];
+                case 6:
+                    decodeErr_1 = _a.sent();
+                    console.log('[RN-Fetch][XVIP-DECODE-ERR] ' + String(decodeErr_1 && decodeErr_1.message ? decodeErr_1.message : decodeErr_1));
+                    return [2, ''];
+                case 7: return [2];
+            }
+        });
+    });
+}
+function xvidsrcvipLooksLikeHttp(url) {
+    return /^https?:\/\//i.test(String(url || ''));
+}
+function xvidsrcvipResolvePlayUrl(rawUrl) {
+    return __awaiter(_this, void 0, void 0, function () {
+        var decoded;
+        return __generator(this, function (_a) {
+            switch (_a.label) {
+                case 0:
+                    if (!rawUrl) {
+                        return [2, ''];
+                    }
+                    if (xvidsrcvipLooksLikeHttp(rawUrl)) {
+                        return [2, rawUrl];
+                    }
+                    return [4, xvidsrcvipDecodeToken(rawUrl)];
+                case 1:
+                    decoded = _a.sent();
+                    if (decoded) {
+                        console.log('[RN-Fetch][XVIP-DECODE] ok host=' + String(decoded).split('/')[2]);
+                    }
+                    else {
+                        console.log('[RN-Fetch][XVIP-DECODE] fail');
+                    }
+                    return [2, decoded];
+            }
+        });
+    });
+}
+function xvidsrcvipNeedsQualityFetch(playUrl) {
+    return playUrl.indexOf('vdrk.site') !== -1 || playUrl.indexOf('/playlist/') !== -1;
+}
+function xvidsrcvipFetchJsonQuality(playUrl, headers) {
+    return fetch(playUrl, { headers: headers, method: 'GET' }).then(function (response) {
+        var contentType = response.headers && response.headers.get ? response.headers.get('content-type') : '';
+        if (!contentType || contentType.indexOf('application/json') === -1) {
+            return null;
+        }
+        return response.json();
+    }).then(function (json) {
+        if (!Array.isArray(json) || !json.length || !json[0].resolution || !json[0].url) {
+            return null;
+        }
+        return json.slice().sort(function (left, right) {
+            return (right.resolution || 0) - (left.resolution || 0);
+        });
+    }).catch(function () {
+        return null;
+    });
+}
+function xvidsrcvipLoadQualityList(playUrl, headers) {
+    if (playUrl.indexOf('vdrk.site') !== -1 && libs.request_get) {
+        return Promise.resolve(libs.request_get(playUrl, headers));
+    }
+    return xvidsrcvipFetchJsonQuality(playUrl, headers);
+}
+function xvidsrcvipBuildDirectQuality(qualityData) {
+    var directQuality = [];
+    for (var i = 0; i < (qualityData || []).length; i++) {
+        var qItem = qualityData[i];
+        if (qItem.resolution && qItem.url) {
+            directQuality.push({
+                file: qItem.url,
+                quality: qItem.resolution,
+            });
+        }
+    }
+    return xvidsrcvipSortByQuality(directQuality);
+}
+function xvidsrcvipEnsureApiJson(runKey, urlovo, headers) {
     var state = xvidsrcvipGetState();
-    state.delivered = {};
-})();
+    if (state.apiCache[runKey]) {
+        console.log('[RN-Fetch][XVIP-API-CACHE] hit');
+        return Promise.resolve(state.apiCache[runKey]);
+    }
+    if (state.apiInflight[runKey]) {
+        console.log('[RN-Fetch][XVIP-API-WAIT] ' + runKey);
+        return state.apiInflight[runKey];
+    }
+    var task = xvidsrcvipFetchApi(urlovo, headers).then(function (json) {
+        delete state.apiInflight[runKey];
+        if (json) {
+            state.apiCache[runKey] = json;
+        }
+        return json;
+    });
+    state.apiInflight[runKey] = task;
+    return task;
+}
+function xvidsrcvipBeginRun(runKey) {
+    var state = xvidsrcvipGetState();
+    if (state.activeRunKey !== runKey) {
+        state.delivered = {};
+        state.apiCache = {};
+        state.activeRunKey = runKey;
+    }
+}
 function xvidsrcvipRunKey(movieInfo) {
     return [
         String(movieInfo.tmdb_id || ''),
@@ -1057,26 +1369,26 @@ function xvidsrcvipRunKey(movieInfo) {
         String(movieInfo.episode || '0'),
     ].join('|');
 }
-function xvidsrcvipShouldDeliver(runKey, fileUrl) {
+function xvidsrcvipShouldDeliver(runKey, fileUrl, fetchGen) {
     var state = xvidsrcvipGetState();
-    var deliverKey = runKey + '|' + String(fileUrl || '');
+    var deliverKey = runKey + '|' + String(fetchGen || 0) + '|' + String(fileUrl || '');
     if (state.delivered[deliverKey]) {
         return false;
     }
     state.delivered[deliverKey] = true;
     return true;
 }
-function xvidsrcvipTryDeliver(fileUrl, provider, host, quality, callback, rank, subs, directQuality, headers, options, runKey) {
-    if (!xvidsrcvipShouldDeliver(runKey, fileUrl)) {
+function xvidsrcvipTryDeliver(fileUrl, provider, host, quality, callback, rank, subs, directQuality, headers, options, runKey, fetchGen) {
+    if (!xvidsrcvipShouldDeliver(runKey, fileUrl, fetchGen)) {
         console.log('[RN-Fetch][XVIP-DELIVER-SKIP] dup rank=' + rank);
         return false;
     }
     console.log('[RN-Fetch][XVIP-DELIVER] rank=' + rank + ' host=' + host + ' label=Server X' + rank);
-    libs.embed_callback(fileUrl, provider, host, quality, callback, rank, subs, directQuality, headers, options);
+    libs.embed_callback(fileUrl, provider, host, quality, callback, rank, subs, [{ file: fileUrl, quality: 1080 }], headers, options);
     return true;
 }
 source.getResource = function (movieInfo, config, callback) { return __awaiter(_this, void 0, void 0, function () {
-    var PROVIDER, DOMAIN, headers, enc, urlovo, response, json, xvipKeyList, xvipLastKey, xvipIdx, _a, _b, _c, _i, item, source, qualityData, directQuality, _d, _e, qItem, dataQuality, textQuality, directQuality, _f, textQuality_1, line, directURl, quality, errorRequest_1, rank, xvipRunKey, e_1;
+    var PROVIDER, DOMAIN, headers, urlovo, json, xvipKeyList, xvipIdx, _i, item, source, playUrl, qualityData, directQuality, _d, _e, qItem, dataQuality, textQuality, directQuality, _f, textQuality_1, line, directURl, quality, deliverOptions, errorRequest_1, rank, xvipRunKey, fetchGen, e_1;
     return __generator(this, function (_g) {
         switch (_g.label) {
             case 0:
@@ -1087,110 +1399,114 @@ source.getResource = function (movieInfo, config, callback) { return __awaiter(_
                     'referer': "https://vidrock.ru/",
                     'origin': "https://vidrock.ru"
                 };
-                console.log('[RN-Fetch][XVIP-VERSION] v9-rank1-dedup');
+                console.log('[RN-Fetch][XVIP-VERSION] v18-slot-quality');
                 xvipRunKey = xvidsrcvipRunKey(movieInfo);
+                xvidsrcvipBeginRun(xvipRunKey);
+                fetchGen = String(Date.now()) + '-' + String(Math.floor(Math.random() * 100000));
                 _g.label = 1;
             case 1:
-                _g.trys.push([1, 14, , 15]);
-                return [4, xvidsrcvipBuildEncWithRetry(movieInfo)];
-            case 2:
-                enc = _g.sent();
-                if (!enc) {
-                    console.log('[RN-Fetch][XVIP-SKIP] crypto-not-ready');
-                    libs.log({ e: 'crypto not ready' }, PROVIDER, 'ERROR');
+                _g.trys.push([1, 16, , 17]);
+                if (!movieInfo || !movieInfo.tmdb_id) {
+                    console.log('[RN-Fetch][XVIP-SKIP] movieinfo-empty tmdb=' + String(movieInfo && movieInfo.tmdb_id));
                     return [2];
                 }
-                console.log('[RN-Fetch][XVIP-ENC] ' + enc);
-                libs.log({ enc: enc }, PROVIDER, "ENCODED");
-                urlovo = "".concat(DOMAIN, "/api/").concat(movieInfo.type, "/").concat(encodeURIComponent(enc));
+                urlovo = xvidsrcvipBuildApiUrl(movieInfo, DOMAIN);
+                if (!urlovo) {
+                    console.log('[RN-Fetch][XVIP-SKIP] api-url-empty');
+                    return [2];
+                }
+                console.log('[RN-Fetch][XVIP-URL] ' + urlovo);
                 libs.log({ urlovo: urlovo }, PROVIDER, "URL");
                 rank = 1;
-                return [4, fetch(urlovo)];
-            case 3:
-                response = _g.sent();
-                if (!response.ok) {
+                return [4, xvidsrcvipEnsureApiJson(xvipRunKey, urlovo, headers)];
+            case 2:
+                json = _g.sent();
+                if (!json) {
                     return [2];
                 }
-                return [4, response.json()];
-            case 4:
-                json = _g.sent();
                 libs.log({ json: json }, PROVIDER, "JSON");
-                _a = json;
-                _b = [];
-                for (_c in _a)
-                    _b.push(_c);
                 xvipKeyList = [];
-                for (xvipIdx = 0; xvipIdx < _b.length; xvipIdx++) {
-                    if (_a[_b[xvipIdx]] && _a[_b[xvipIdx]].url) {
-                        xvipKeyList.push(_b[xvipIdx]);
+                for (xvipIdx in json) {
+                    if (!Object.prototype.hasOwnProperty.call(json, xvipIdx)) {
+                        continue;
+                    }
+                    if (json[xvipIdx] && json[xvipIdx].url && json[xvipIdx].type) {
+                        xvipKeyList.push(xvipIdx);
                     }
                 }
                 if (!xvipKeyList.length) {
                     console.log('[RN-Fetch][XVIP-SKIP] sources-empty');
                     return [2];
                 }
-                xvipLastKey = xvipKeyList[xvipKeyList.length - 1];
-                console.log('[RN-Fetch][XVIP-PICK] last=' + xvipLastKey + ' total=' + xvipKeyList.length);
-                _i = 0;
+                xvipKeyList.sort(function (leftKey, rightKey) {
+                                    var leftType = json[leftKey] && json[leftKey].type === 'hls' ? 0 : 1;
+                                    var rightType = json[rightKey] && json[rightKey].type === 'hls' ? 0 : 1;
+                                    return leftType - rightType;
+                                });
+                xvipKeyList = xvipKeyList.filter(function (key) {
+                    return json[key] && json[key].type === 'hls';
+                }).slice(0, 3);
+                if (!xvipKeyList.length) {
+                    console.log('[RN-Fetch][XVIP-SKIP] hls-sources-empty');
+                    return [2];
+                }
+                console.log('[RN-Fetch][XVIP-PICK] total=' + xvipKeyList.length + ' keys=' + xvipKeyList.join(','));
+                                _i = 0;
                 _g.label = 5;
             case 5:
-                if (!(_i < _b.length)) return [3, 15];
-                _c = _b[_i];
-                if (!(_c in _a)) return [3, 13];
-                if (_c !== xvipLastKey) {
-                    _i++;
-                    return [3, 5];
-                }
-                item = _c;
+                if (!(_i < xvipKeyList.length)) return [3, 17];
+                item = xvipKeyList[_i];
+                rank = _i + 1;
                 _g.label = 6;
             case 6:
-                _g.trys.push([6, 12, , 13]);
+                _g.trys.push([6, 14, , 15]);
                 source = json[item];
                 if (!source.url) {
-                    return [3, 13];
+                    return [3, 15];
                 }
-                if (!(source.url.indexOf("vdrk.site") != -1)) return [3, 8];
-                return [4, libs.request_get(source.url, headers)];
+                return [4, xvidsrcvipResolvePlayUrl(source.url)];
             case 7:
+                playUrl = _g.sent();
+                if (!playUrl) {
+                    console.log('[RN-Fetch][XVIP-SKIP] playurl-empty host=' + item);
+                    return [3, 15];
+                }
+                if (!xvidsrcvipNeedsQualityFetch(playUrl)) return [3, 9];
+                return [4, xvidsrcvipLoadQualityList(playUrl, headers)];
+            case 8:
                 qualityData = _g.sent();
                 libs.log({ qualityData: qualityData }, PROVIDER, "QUALITY DATA");
-                directQuality = [];
-                for (_d = 0, _e = qualityData || []; _d < _e.length; _d++) {
-                    qItem = _e[_d];
-                    libs.log({ qItem: qItem }, PROVIDER, "QUALITY ITEM");
-                    if (qItem.resolution && qItem.url) {
-                        directQuality.push({
-                            file: qItem.url,
-                            quality: qItem.resolution,
-                        });
-                    }
-                }
+                directQuality = xvidsrcvipBuildDirectQuality(qualityData);
                 if (directQuality.length > 0) {
                     libs.log({ directQuality: directQuality }, PROVIDER, "DIRECT QUALITY");
-                    directQuality = xvidsrcvipSortByQuality(directQuality);
-                    xvidsrcvipTryDeliver(directQuality[0].file, PROVIDER, item, 'Hls', callback, rank, [], directQuality, headers, {}, xvipRunKey);
+                    if (directQuality[0].file.indexOf('.m3u8') < 0) {
+                        console.log('[RN-Fetch][XVIP-SKIP] host=' + item + ' reason=non-m3u8');
+                        return [3, 15];
+                    }
+                    deliverOptions = { type: 'm3u8' };
+                    xvidsrcvipTryDeliver(directQuality[0].file, PROVIDER, item, 'Hls', callback, rank, [], directQuality, headers, deliverOptions, xvipRunKey, fetchGen);
                 }
-                return [3, 13];
-            case 8:
-                if (!(source.url.indexOf("/playlist.m3u8") != -1)) return [3, 11];
-                return [4, fetch(source.url, {
+                return [3, 15];
+            case 9:
+                if (!(playUrl.indexOf("/playlist.m3u8") != -1)) return [3, 13];
+                return [4, fetch(playUrl, {
                         headers: headers,
                         method: "GET"
                     })];
-            case 9:
+            case 10:
                 dataQuality = _g.sent();
                 return [4, dataQuality.text()];
-            case 10:
+            case 11:
                 textQuality = _g.sent();
                 textQuality = textQuality.split("\n").filter(function (line) { return line.indexOf("/playlist.m3u8") != -1; });
                 libs.log({ textQuality: textQuality }, PROVIDER, "TEXT QUALITY");
                 if (!textQuality) {
-                    return [3, 13];
+                    return [3, 15];
                 }
                 directQuality = [];
                 for (_f = 0, textQuality_1 = textQuality; _f < textQuality_1.length; _f++) {
                     line = textQuality_1[_f];
-                    directURl = source.url.split("/playlist.m3u8")[0] + "/" + line.trim();
+                    directURl = playUrl.split("/playlist.m3u8")[0] + "/" + line.trim();
                     quality = line.trim().split("/")[0] || 1080;
                     libs.log({ directURl: directURl, quality: quality }, PROVIDER, "DIRECT URL AND QUALITY");
                     if (directURl && quality) {
@@ -1202,31 +1518,33 @@ source.getResource = function (movieInfo, config, callback) { return __awaiter(_
                 }
                 libs.log({ directQuality: directQuality }, PROVIDER, "DIRECT QUALITY");
                 if (!directQuality || directQuality.length == 0) {
-                    return [3, 13];
+                    return [3, 15];
                 }
                 directQuality = xvidsrcvipSortByQuality(directQuality);
                 libs.log({ directQuality: directQuality }, PROVIDER, "ORDERED DIRECT QUALITY");
                 xvidsrcvipTryDeliver(directQuality[0].file, PROVIDER, item, 'Hls', callback, rank, [], directQuality, headers, {
                     "type": "m3u8"
-                }, xvipRunKey);
-                return [3, 13];
-            case 11:
-                xvidsrcvipTryDeliver(source.url, PROVIDER, item, 'Hls', callback, rank, [], [{ file: source.url, quality: 1080 }], headers, source.url.indexOf(".m3u8") != -1 ? {
-                    type: "m3u8"
-                } : {}, xvipRunKey);
-                return [3, 13];
-            case 12:
-                errorRequest_1 = _g.sent();
-                return [3, 13];
+                }, xvipRunKey, fetchGen);
+                return [3, 15];
             case 13:
+                deliverOptions = (source.type === 'hls' || playUrl.indexOf('.m3u8') != -1) ? {
+                    type: "m3u8"
+                } : {};
+                xvidsrcvipTryDeliver(playUrl, PROVIDER, item, 'Hls', callback, rank, [], [{ file: playUrl, quality: 1080 }], headers, deliverOptions, xvipRunKey, fetchGen);
+                return [3, 15];
+            case 14:
+                errorRequest_1 = _g.sent();
+                console.log('[RN-Fetch][XVIP-SOURCE-ERR] host=' + item + ' ' + String(errorRequest_1 && errorRequest_1.message ? errorRequest_1.message : errorRequest_1));
+                return [3, 15];
+            case 15:
                 _i++;
                 return [3, 5];
-            case 14:
+            case 16:
                 e_1 = _g.sent();
                 libs.log({ e: e_1 }, PROVIDER, "ERROR");
                 console.log('[RN-Fetch][XVIP-ERROR] ' + String(e_1 && e_1.message ? e_1.message : e_1));
-                return [3, 15];
-            case 15: return [2];
+                return [3, 17];
+            case 17: return [2];
         }
     });
 }); };
