@@ -54,7 +54,7 @@ callbacksEmbed["ployan"] = function (dataCallback, provider, host, callback, met
                 return [2];
             }
             if (data.step) {
-                console.log('[RN-Fetch][PLOYAN-STEP] ' + data.step + (data.mode ? ' mode=' + data.mode : '') + (data.loc ? ' loc=' + data.loc : '') + (data.plain ? ' plain=' + data.plain : '') + (data.status !== undefined ? ' status=' + data.status : '') + (data.error ? ' err=' + data.error : '') + (data.source ? ' src=' + data.source : ''));
+                console.log('[RN-Fetch][PLOYAN-STEP] ' + data.step + (data.mode ? ' mode=' + data.mode : '') + (data.host ? ' host=' + data.host : '') + (data.loc ? ' loc=' + data.loc : '') + (data.plain ? ' plain=' + data.plain : '') + (data.status !== undefined ? ' status=' + data.status : '') + (data.urixLen !== undefined ? ' urixLen=' + data.urixLen : '') + (data.hashLen !== undefined ? ' hashLen=' + data.hashLen : '') + (data.ms !== undefined ? ' ms=' + data.ms : '') + (data.title ? ' title=' + data.title : '') + (data.body ? ' body=' + data.body : '') + (data.pwd ? ' pwd=' + data.pwd : '') + (data.referrer ? ' ref=' + data.referrer : '') + (data.clicked !== undefined ? ' clicked=' + data.clicked : '') + (data.to ? ' to=' + data.to : '') + (data.src ? ' src=' + data.src : '') + (data.error ? ' err=' + data.error : '') + (data.source ? ' source=' + data.source : ''));
                 return [2];
             }
             if (data.error) {
@@ -68,14 +68,30 @@ callbacksEmbed["ployan"] = function (dataCallback, provider, host, callback, met
                     info = json.info;
                     directUrl = 'https://ployan.me/hls/' + info + '/master.m3u8';
                     console.log('[RN-Fetch][PLOYAN-GET-CB] ' + directUrl);
+                    try {
+                        libs.__iyesWvActive = false;
+                        libs.__iyesWvBusyUntil = 0;
+                        libs.__iyesWvLockKey = '';
+                        if (libs.__iyesWvUnlockTimer) {
+                            clearTimeout(libs.__iyesWvUnlockTimer);
+                            libs.__iyesWvUnlockTimer = null;
+                        }
+                        console.log('[RN-Fetch][YESMOVIES-EMBED] wv-unlock after get-ok');
+                    }
+                    catch (eUnlock) { }
                     streamHeaders = {
                         'Referer': 'https://ployan.me/',
                         'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36'
                     };
-                    libs.embed_callback(directUrl, VOD_PROVIDER, VOD_PROVIDER, 'Hls', callback, 0, [], [{ file: directUrl, quality: 1080 }], streamHeaders, {
-                        is_end_webview: true,
-                        url_webview: metadata && metadata.url_webview ? metadata.url_webview : ''
-                    });
+                    // Deliver Server I WITHOUT is_end_webview on the same tick as the file.
+                    // Bundling end+file made the App finalize the source list while A/X/L/B were still arriving.
+                    libs.embed_callback(directUrl, VOD_PROVIDER, VOD_PROVIDER, 'Hls', callback, 0, [], [{ file: directUrl, quality: 1080 }], streamHeaders, {});
+                    console.log('[RN-Fetch][PLOYAN-DELIVER] Server I file=' + directUrl.substring(0, 100));
+                    setTimeout(function () {
+                        if (typeof libs.__closeEmbedWebview === 'function') {
+                            libs.__closeEmbedWebview(callback, metadata);
+                        }
+                    }, 300);
                 }
             }
         }
