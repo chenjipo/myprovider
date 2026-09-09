@@ -36,7 +36,7 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 var _this = this;
 var VOD_PROVIDER = 'IYesMovies';
-callbacksEmbed["ployan"] = function (dataCallback, provider, host, callback, metadata) { return __awaiter(_this, void 0, void 0, function () {
+function ployanCallbackHandler(dataCallback, provider, host, callback, metadata) { return __awaiter(_this, void 0, void 0, function () {
     var data, json, info, directUrl, streamHeaders;
     return __generator(this, function (_a) {
         try {
@@ -54,7 +54,25 @@ callbacksEmbed["ployan"] = function (dataCallback, provider, host, callback, met
                 return [2];
             }
             if (data.step) {
-                console.log('[RN-Fetch][PLOYAN-STEP] ' + data.step + (data.mode ? ' mode=' + data.mode : '') + (data.host ? ' host=' + data.host : '') + (data.loc ? ' loc=' + data.loc : '') + (data.plain ? ' plain=' + data.plain : '') + (data.status !== undefined ? ' status=' + data.status : '') + (data.urixLen !== undefined ? ' urixLen=' + data.urixLen : '') + (data.hashLen !== undefined ? ' hashLen=' + data.hashLen : '') + (data.ms !== undefined ? ' ms=' + data.ms : '') + (data.title ? ' title=' + data.title : '') + (data.body ? ' body=' + data.body : '') + (data.pwd ? ' pwd=' + data.pwd : '') + (data.referrer ? ' ref=' + data.referrer : '') + (data.clicked !== undefined ? ' clicked=' + data.clicked : '') + (data.to ? ' to=' + data.to : '') + (data.src ? ' src=' + data.src : '') + (data.error ? ' err=' + data.error : '') + (data.source ? ' source=' + data.source : ''));
+                console.log('[RN-Fetch][PLOYAN-STEP] ' + data.step + (data.mode ? ' mode=' + data.mode : '') + (data.host ? ' host=' + data.host : '') + (data.loc ? ' loc=' + data.loc : '') + (data.plain ? ' plain=' + data.plain : '') + (data.status !== undefined ? ' status=' + data.status : '') + (data.urixLen !== undefined ? ' urixLen=' + data.urixLen : '') + (data.hashLen !== undefined ? ' hashLen=' + data.hashLen : '') + (data.ms !== undefined ? ' ms=' + data.ms : '') + (data.title ? ' title=' + data.title : '') + (data.body ? ' body=' + data.body : '') + (data.pwd ? ' pwd=' + data.pwd : '') + (data.referrer ? ' ref=' + data.referrer : '') + (data.clicked !== undefined ? ' clicked=' + data.clicked : '') + (data.to ? ' to=' + data.to : '') + (data.src ? ' src=' + data.src : '') + (data.error ? ' err=' + data.error : '') + (data.source ? ' source=' + data.source : '') + (data.dead !== undefined ? ' dead=' + data.dead : ''));
+                if (data.step === 'page-404') {
+                    try {
+                        libs.__iyesWvActive = false;
+                        libs.__iyesWvBusyUntil = 0;
+                        libs.__iyesWvLockKey = '';
+                        if (libs.__iyesWvUnlockTimer) {
+                            clearTimeout(libs.__iyesWvUnlockTimer);
+                            libs.__iyesWvUnlockTimer = null;
+                        }
+                        console.log('[RN-Fetch][YESMOVIES-EMBED] wv-unlock after page-404');
+                    }
+                    catch (e404) { }
+                    setTimeout(function () {
+                        if (typeof libs.__closeEmbedWebview === 'function') {
+                            libs.__closeEmbedWebview(callback, metadata);
+                        }
+                    }, 200);
+                }
                 return [2];
             }
             if (data.error) {
@@ -62,7 +80,7 @@ callbacksEmbed["ployan"] = function (dataCallback, provider, host, callback, met
                 return [2];
             }
             libs.log({ data: data }, provider, 'PLOYAN WEBVIEW');
-            if (data.responseText && data.responseText.charAt(0) === '{' && (data.source === 'inject' || data.source === 'hook' || data.source === 'xhr' || (data.responseURL && data.responseURL.indexOf('/get/') != -1))) {
+            if (data.responseText && data.responseText.charAt(0) === '{' && (data.source === 'inject' || data.source === 'hook' || data.source === 'xhr' || data.source === 'force' || (data.responseURL && data.responseURL.indexOf('/get/') != -1))) {
                 json = JSON.parse(data.responseText);
                 if (json && json.code === 200 && json.info) {
                     info = json.info;
@@ -100,4 +118,6 @@ callbacksEmbed["ployan"] = function (dataCallback, provider, host, callback, met
         }
         return [2];
     });
-}); };
+}); }
+callbacksEmbed["ployan"] = ployanCallbackHandler;
+callbacksEmbed["ployan-embed"] = ployanCallbackHandler;
