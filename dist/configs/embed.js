@@ -173,6 +173,21 @@ libs.__wrapVodLinkCallback = function (rawCallback) {
     }
     var base = libs.__unwrapVodCallback(rawCallback);
     var wrapped = function (linkData) {
+        if (linkData && linkData.__iyesHoldForSync && linkData.file) {
+            var iyesBag = libs.__getVodSyncBag();
+            if (iyesBag.startMs && !iyesBag.flushed) {
+                if (!libs.__vodSyncHasProvider('IYesMovies')) {
+                    libs.__pushVodSyncItem(linkData.file, 'IYesMovies', 'IYesMovies', linkData.quality || 'Hls', base, 0, linkData.subs || [], linkData.direct_quality || [], linkData.headers || {}, {});
+                    console.log('[RN-Fetch][PLOYAN-DELIVER] sync-push n=' + iyesBag.items.length);
+                }
+                else {
+                    console.log('[RN-Fetch][PLOYAN-DELIVER] sync-skip-dup');
+                }
+                return;
+            }
+            console.log('[RN-Fetch][PLOYAN-DELIVER] sync-drop flushed=' + (iyesBag.flushed ? 1 : 0) + ' start=' + (iyesBag.startMs ? 1 : 0));
+            return;
+        }
         if (!linkData || !linkData.file) {
             base(linkData);
             return;
@@ -337,8 +352,12 @@ libs.__isVodBatchProvider = function (provider) {
     if (libs.__vodSyncYaxEnabled && libs.__isVodYaxBatchProvider(provider)) {
         return true;
     }
-    // IYesMovies is deferred WebView AFTER A/Y/X/L/B sync — must direct-deliver as Server I,
-    // otherwise a lone IYesMovies item never passes yax-ready and stays stuck in SYNC-QUEUE.
+    // Queue Server I with A/X/L/B so one flush shows every server.
+    // Direct-deliver before that flush made the App keep only I.
+    if (provider === 'IYesMovies') {
+        var iyesBag = libs.__getVodSyncBag();
+        return !!(iyesBag && iyesBag.startMs && !iyesBag.flushed);
+    }
     return provider === 'MUniqueStream' || provider === 'MVidlink';
 };
 libs.__isVodBatchStream = function (urlDirect, provider) {
@@ -381,7 +400,7 @@ libs.__batchHasProvider = function (provider) {
     }
     return false;
 };
-libs.__embedSyncVersion = 'v31-iyes-lock-gen';
+libs.__embedSyncVersion = 'v38-iyes-handoff';
 libs.__vodSyncYaxEnabled = true;
 // Rollback: set __vodSyncYaxEnabled=false to restore direct deliver (pre-v13 / direct-v25).
 libs.__vodSyncYaxCoreProviders = ['YMovies', 'AVideasy', 'XVidsrcVip'];
@@ -501,8 +520,18 @@ libs.__vodSyncIsYaxReady = function (items, elapsed) {
         return true;
     }
     // Deferred non-YAX sources alone in bag.
+    // IYesMovies must not flush by itself: that delivery replaces the list with only Server I.
     if (items.length >= 1 && familyCount === 0 && coreFamilies === 0 && elapsed >= (libs.__vodSyncCoalesceMs || 4500)) {
-        return true;
+        var waitingOnI = false;
+        for (var iyesIdx = 0; iyesIdx < items.length; iyesIdx++) {
+            if (items[iyesIdx][1] === 'IYesMovies') {
+                waitingOnI = true;
+                break;
+            }
+        }
+        if (!waitingOnI) {
+            return true;
+        }
     }
     // L/B-only (YAX family but no Y/A/X core) — do not wait forever for core providers.
     if (items.length >= 1 && coreFamilies === 0 && familyCount >= 1 && elapsed >= Math.max(libs.__vodSyncCoalesceMs || 4500, 8000)) {
@@ -511,7 +540,7 @@ libs.__vodSyncIsYaxReady = function (items, elapsed) {
     return false;
 };
 libs.__vodSyncSortItems = function (items) {
-    var order = { 'YMovies': 100, 'AVideasy': 200, 'XVidsrcVip': 300, 'LRIDOMOVIE': 400, 'BlookMovie': 500 };
+    var order = { 'YMovies': 100, 'AVideasy': 200, 'XVidsrcVip': 300, 'LRIDOMOVIE': 400, 'BlookMovie': 500, 'IYesMovies': 600 };
     return items.slice().sort(function (left, right) {
         var leftBase = order[left[1]] || 500;
         var rightBase = order[right[1]] || 500;
@@ -582,6 +611,7 @@ libs.__flushVodSyncItems = function () {
     bag.items = [];
     libs.__vodSyncItems = bag.items;
     libs.__vodSyncFlushed = true;
+    libs.__iyesSyncFlushed = true;
     if (bag.coalesceTimer) {
         clearTimeout(bag.coalesceTimer);
         bag.coalesceTimer = null;
@@ -616,7 +646,9 @@ libs.__deferProviderWebview = function (provider, task) {
     // Wait for YAX flush (A/X/L/B first). Only open I after flush or hard deadline.
     // v28's fixed 7s FALLBACK opened I before sync and is_end_webview could freeze the UI on Server I only.
     var startedAt = Date.now();
-    var maxWaitMs = (libs.__vodSyncHardMaxMs || 26000) + 2000;
+    // Open I around 8s so /get/ finishes before the user switches titles.
+    // Do NOT is_end until sync flushes — that close is what froze the list on Server I only.
+    var maxWaitMs = provider === 'IYesMovies' ? 8000 : ((libs.__vodSyncHardMaxMs || 26000) + 2000);
     var pollMs = 1000;
     var tryRun = function () {
         var map = libs.__vodDeferredWebviews || {};
@@ -701,6 +733,7 @@ libs.__finishSyncSession = function (reason) {
     }
     bag.flushed = true;
     libs.__vodSyncFlushed = true;
+    libs.__iyesSyncFlushed = true;
     if (bag.timer) {
         clearTimeout(bag.timer);
         bag.timer = null;
@@ -877,6 +910,7 @@ libs.beginVodLinkSession = function (forceNew) {
         libs.__vodSyncStartMs = bag.startMs;
         libs.__vodSyncItems = bag.items;
         libs.__vodSyncFlushed = false;
+        libs.__iyesSyncFlushed = false;
         libs.__vodSyncDeliveredProviders = {};
         libs.__vidlinkDelivered = {};
         libs.__vidlinkPlayLock = {};

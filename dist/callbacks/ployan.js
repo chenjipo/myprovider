@@ -35,6 +35,9 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
     }
 };
 var _this = this;
+var iyesHoldActive = false;
+var iyesHoldMid = '';
+var iyesHoldSerial = 0;
 var VOD_PROVIDER = 'IYesMovies';
 function ployanCallbackHandler(dataCallback, provider, host, callback, metadata) { return __awaiter(_this, void 0, void 0, function () {
     var data, json, info, directUrl, streamHeaders;
@@ -55,6 +58,30 @@ function ployanCallbackHandler(dataCallback, provider, host, callback, metadata)
             }
             if (data.step) {
                 console.log('[RN-Fetch][PLOYAN-STEP] ' + data.step + (data.mode ? ' mode=' + data.mode : '') + (data.host ? ' host=' + data.host : '') + (data.loc ? ' loc=' + data.loc : '') + (data.plain ? ' plain=' + data.plain : '') + (data.status !== undefined ? ' status=' + data.status : '') + (data.urixLen !== undefined ? ' urixLen=' + data.urixLen : '') + (data.hashLen !== undefined ? ' hashLen=' + data.hashLen : '') + (data.ms !== undefined ? ' ms=' + data.ms : '') + (data.title ? ' title=' + data.title : '') + (data.body ? ' body=' + data.body : '') + (data.pwd ? ' pwd=' + data.pwd : '') + (data.pwds ? ' pwds=' + data.pwds : '') + (data.tried ? ' tried=' + data.tried : '') + (data.age !== undefined ? ' age=' + data.age : '') + (data.referrer ? ' ref=' + data.referrer : '') + (data.clicked !== undefined ? ' clicked=' + data.clicked : '') + (data.to ? ' to=' + data.to : '') + (data.src ? ' src=' + data.src : '') + (data.error ? ' err=' + data.error : '') + (data.source ? ' source=' + data.source : '') + (data.dead !== undefined ? ' dead=' + data.dead : ''));
+                if (data.step === 'title-ok') {
+                    try {
+                        // Extend lock once title decrypts — /get/ often arrives 1–4s later.
+                        libs.__iyesWvLockGen = (libs.__iyesWvLockGen || 0) + 1;
+                        var titleGen = libs.__iyesWvLockGen;
+                        libs.__iyesWvActive = true;
+                        libs.__iyesWvBusyUntil = Date.now() + 90000;
+                        if (libs.__iyesWvUnlockTimer) {
+                            clearTimeout(libs.__iyesWvUnlockTimer);
+                            libs.__iyesWvUnlockTimer = null;
+                        }
+                        libs.__iyesWvUnlockTimer = setTimeout(function () {
+                            if (libs.__iyesWvLockGen !== titleGen) {
+                                return;
+                            }
+                            libs.__iyesWvActive = false;
+                            libs.__iyesWvBusyUntil = 0;
+                            libs.__iyesWvLockKey = '';
+                            console.log('[RN-Fetch][YESMOVIES-EMBED] wv-unlock after title-ok-extend gen=' + titleGen);
+                        }, 90000);
+                        console.log('[RN-Fetch][YESMOVIES-EMBED] wv-extend 90s after title-ok gen=' + titleGen);
+                    }
+                    catch (eTitle) { }
+                }
                 if (data.step === 'page-404') {
                     try {
                         libs.__iyesWvActive = false;
@@ -114,6 +141,7 @@ function ployanCallbackHandler(dataCallback, provider, host, callback, metadata)
                     directUrl = 'https://ployan.me/hls/' + info + '/master.m3u8';
                     console.log('[RN-Fetch][PLOYAN-GET-CB] ' + directUrl);
                     try {
+                        libs.__iyesWvLockGen = (libs.__iyesWvLockGen || 0) + 1;
                         libs.__iyesWvActive = false;
                         libs.__iyesWvBusyUntil = 0;
                         libs.__iyesWvLockKey = '';
@@ -121,22 +149,27 @@ function ployanCallbackHandler(dataCallback, provider, host, callback, metadata)
                             clearTimeout(libs.__iyesWvUnlockTimer);
                             libs.__iyesWvUnlockTimer = null;
                         }
-                        console.log('[RN-Fetch][YESMOVIES-EMBED] wv-unlock after get-ok');
+                        console.log('[RN-Fetch][YESMOVIES-EMBED] wv-unlock after get-ok gen=' + libs.__iyesWvLockGen);
                     }
                     catch (eUnlock) { }
                     streamHeaders = {
                         'Referer': 'https://ployan.me/',
                         'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36'
                     };
-                    // Deliver Server I WITHOUT is_end_webview on the same tick as the file.
-                    // Bundling end+file made the App finalize the source list while A/X/L/B were still arriving.
-                    libs.embed_callback(directUrl, VOD_PROVIDER, VOD_PROVIDER, 'Hls', callback, 0, [], [{ file: directUrl, quality: 1080 }], streamHeaders, {});
-                    console.log('[RN-Fetch][PLOYAN-DELIVER] Server I file=' + directUrl.substring(0, 100));
-                    setTimeout(function () {
-                        if (typeof libs.__closeEmbedWebview === 'function') {
-                            libs.__closeEmbedWebview(callback, metadata);
-                        }
-                    }, 300);
+                    // Hand the file to the wrapped app callback. That wrapper lives in
+                    // embed.js and pushes into the real sync bag. Calling embed_callback
+                    // from here delivers straight to the UI and leaves only Server I.
+                    callback({
+                        file: directUrl,
+                        quality: 'Hls',
+                        host: 'IYesMovies',
+                        source: 'IYesMovies',
+                        provider: 'IYesMovies',
+                        headers: streamHeaders,
+                        direct_quality: [{ file: directUrl, quality: 1080 }],
+                        __iyesHoldForSync: true
+                    });
+                    console.log('[RN-Fetch][PLOYAN-DELIVER] handoff file=' + directUrl.substring(0, 80));
                 }
                 else {
                     console.log('[RN-Fetch][PLOYAN-GET-FAIL] status=' + data.status + ' code=' + (json && json.code) + ' source=' + data.source + ' body=' + String(data.responseText).substring(0, 120));
